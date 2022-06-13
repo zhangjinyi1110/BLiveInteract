@@ -270,7 +270,7 @@ public class RoomService extends Service {
             String danMu = (String) info.get(1);
             List<Object> user = (List<Object>) info.get(2);
             long userid = (long) user.get(0);
-            long username = (long) user.get(1);
+            String username = (String) user.get(1);
             UserDanMu userDanMu = new UserDanMu(userid, username, danMu);
             if (handler != null) {
                 Message message = Message.obtain();

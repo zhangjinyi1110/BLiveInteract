@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.util.AttributeSet;
@@ -15,6 +14,7 @@ import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import zjy.android.bliveinteract.model.Territory;
 import zjy.android.bliveinteract.model.Warrior;
@@ -28,7 +28,9 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     private List<Territory> mapTerrs;
     private Territory shuCapital, weiCapital, wuCapital, qunCapital;
     private List<Warrior> weiWarriors, shuWarriors, wuWarriors, qunWarriors;
-    private Path warriorPath, terrPath;
+
+    private final int lineCount = 50;
+    private final int rowCount = 35;
 
     public WarGameView(Context context) {
         super(context);
@@ -48,9 +50,6 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     private void init() {
         holder = getHolder();
         holder.addCallback(this);
-
-        warriorPath = new Path();
-        terrPath = new Path();
 
         mapTerrs = new ArrayList<>();
         weiCapital = new Territory();
@@ -79,7 +78,16 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
         qunMapPaint.setColor(Color.argb(100, 100, 100, 100));
 
         shuWarriorPaint = new Paint();
-        shuWarriorPaint.setColor(Color.YELLOW);
+        shuWarriorPaint.setColor(Color.RED);
+
+        weiWarriorPaint = new Paint();
+        weiWarriorPaint.setColor(Color.BLUE);
+
+        wuWarriorPaint = new Paint();
+        wuWarriorPaint.setColor(Color.GREEN);
+
+        qunWarriorPaint = new Paint();
+        qunWarriorPaint.setColor(Color.GRAY);
     }
 
     @Override
@@ -103,7 +111,7 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     private void drawUI() {
         Canvas canvas = holder.lockCanvas();
         try {
-//            canvas.drawColor(Color.WHITE);
+            canvas.drawColor(Color.WHITE);
             drawMap(canvas);
             drawShu(canvas);
             drawWei(canvas);
@@ -118,29 +126,25 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
 
     private void drawQun(Canvas canvas) {
         for (Warrior warrior : qunWarriors) {
-            canvas.drawCircle(warrior.currPoint.x, warrior.currPoint.y, warrior.radius,
-                    qunWarriorPaint);
+            canvas.drawCircle(warrior.getX(), warrior.getY(), warrior.getRadius(), qunWarriorPaint);
         }
     }
 
     private void drawWu(Canvas canvas) {
         for (Warrior warrior : wuWarriors) {
-            canvas.drawCircle(warrior.currPoint.x, warrior.currPoint.y, warrior.radius,
-                    wuWarriorPaint);
+            canvas.drawCircle(warrior.getX(), warrior.getY(), warrior.getRadius(), wuWarriorPaint);
         }
     }
 
     private void drawWei(Canvas canvas) {
         for (Warrior warrior : weiWarriors) {
-            canvas.drawCircle(warrior.currPoint.x, warrior.currPoint.y, warrior.radius,
-                    weiWarriorPaint);
+            canvas.drawCircle(warrior.getX(), warrior.getY(), warrior.getRadius(), weiWarriorPaint);
         }
     }
 
     private void drawShu(Canvas canvas) {
         for (Warrior warrior : shuWarriors) {
-            canvas.drawCircle(warrior.currPoint.x, warrior.currPoint.y, warrior.radius,
-                    shuWarriorPaint);
+            canvas.drawCircle(warrior.getX(), warrior.getY(), warrior.getRadius(), shuWarriorPaint);
         }
     }
 
@@ -161,31 +165,33 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     }
 
     private void initTerritory() {
-        int territoryWidth = 50;
-        float territoryHeight = 35;
-        float size = getHeight() / territoryHeight;
-        for (int i = 0; i < territoryWidth; i++) {
+        float size = getHeight() * 1f / rowCount;
+        int l = lineCount / 4;
+        int r = rowCount  / 4;
+        int ll = l * 3;
+        int rl = r * 3;
+        for (int i = 0; i < lineCount; i++) {
             float left = i * size;
             float right = left + size;
-            for (int j = 0; j < territoryHeight; j++) {
+            for (int j = 0; j < rowCount; j++) {
                 float top = j * size;
                 float bottom = top + size;
                 RectF rectF = new RectF(left, top, right, bottom);
                 Territory info = new Territory();
                 info.rectF = rectF;
-                if (i == 12) {
-                    if (j == 7) {
+                if (i == l) {
+                    if (j == r) {
                         weiCapital = info;
                         info.nation = 1;
-                    } else if (j == 25) {
+                    } else if (j == rl) {
                         shuCapital = info;
                         info.nation = 2;
                     }
-                } else if (i == 37) {
-                    if (j == 7) {
+                } else if (i == ll) {
+                    if (j == r) {
                         qunCapital = info;
                         info.nation = 4;
-                    } else if (j == 25) {
+                    } else if (j == rl) {
                         wuCapital = info;
                         info.nation = 3;
                     }
@@ -196,164 +202,167 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     }
 
     private void initWarrior() {
-        float size = getHeight() / 70f;
+        float size = getHeight() / (rowCount * 2f);
 
-        Warrior weiWarrior = new Warrior();
-        weiWarrior.speed = 1;
-        weiWarrior.nation = 1;
-        weiWarrior.radius = size;
-        weiWarrior.angle = 60;
-        weiWarrior.currPoint = new PointF(weiCapital.rectF.centerX(), weiCapital.rectF.centerY());
+        Warrior weiWarrior = new Warrior(1, 60, size, 1, new PointF(weiCapital.rectF.centerX(), weiCapital.rectF.centerY()));
         weiWarriors.add(weiWarrior);
 
-        Warrior shuWarrior = new Warrior();
-        shuWarrior.speed = 1;
-        shuWarrior.nation = 2;
-        shuWarrior.radius = size;
-        shuWarrior.angle = 45;
-        shuWarrior.currPoint = new PointF(shuCapital.rectF.centerX(), shuCapital.rectF.centerY());
+        Warrior shuWarrior = new Warrior(1, 50, size, 2, new PointF(shuCapital.rectF.centerX(), shuCapital.rectF.centerY()));
         shuWarriors.add(shuWarrior);
 
-        Warrior wuWarrior = new Warrior();
-        wuWarrior.speed = 1;
-        wuWarrior.nation = 3;
-        wuWarrior.radius = size;
-        wuWarrior.angle = 70;
-        wuWarrior.currPoint = new PointF(wuCapital.rectF.centerX(), wuCapital.rectF.centerY());
+        Warrior wuWarrior = new Warrior(1, 70, size, 3, new PointF(wuCapital.rectF.centerX(), wuCapital.rectF.centerY()));
         wuWarriors.add(wuWarrior);
 
-        Warrior qunWarrior = new Warrior();
-        qunWarrior.speed = 1;
-        qunWarrior.nation = 4;
-        qunWarrior.radius = size;
-        qunWarrior.angle = 80;
-        qunWarrior.currPoint = new PointF(qunCapital.rectF.centerX(), qunCapital.rectF.centerY());
+        Warrior qunWarrior = new Warrior(1, 80, size, 4, new PointF(qunCapital.rectF.centerX(), qunCapital.rectF.centerY()));
         qunWarriors.add(qunWarrior);
     }
 
-//    private void attack() {
-//        advance(weiWarriors);
-//        advance(shuWarriors);
-//        advance(wuWarriors);
-//        advance(qunWarriors);
-//        Path terrPath = new Path();
-//        Path warriorPath = new Path();
-//        for (Territory terr : mapTerrs) {
-//            terrPath.addRect(terr.rectF, Path.Direction.CW);
-//            for (Warrior w : weiWarriors) {
-//                warriorPath.addCircle(w.currPoint.x, w.currPoint.y, w.radius, Path.Direction.CW);
-//                if (warriorPath.op(terrPath, Path.Op.XOR)) {
-//                    terr.nation = w.nation;
-//
-////                    float cx = w.currPoint.x;
-////                    float cy = w.currPoint.y;
-////                    float px = terr.rectF.centerX();
-////                    float py = terr.rectF.centerY();
-////                    float k = (cy - py) / (cx - px);
-////                    float b = cy - cx * k;
-////                    float r = w.radius;
-////                    float A = k * k + 1;
-////                    float B = -2 * (cx - b * k + k * cy);
-////                    float C = -(r * r) + (cx * cx) + (cy * cy) + (b * b) - (2 * b * cy);
-////                    double sqrt = Math.sqrt(B * B - 4 * A * C);
-////                    double x1 = (sqrt - B) / (2 * A);
-////                    double x2 = (sqrt + B) / (2 * A);
-////                    double y;
-////                    if (px - x1 < px - x2) {
-////                        y = k * x1 + b;
-////                    } else {
-////                        y = k * x2 + b;
-////                    }
-//                    if (w.angle < 90) {
-//                        w.angle = 90 - w.angle + 90;
-//                    } else if (w.angle < 180) {
-//
-//                    } else if (w.angle < 270) {
-//
-//                    } else {
-//
-//                    }
-//                }
-//            }
-//        }
-//    }
+    private void calculate() {
+        advance(weiWarriors);
+        advance(shuWarriors);
+        advance(wuWarriors);
+        advance(qunWarriors);
 
-    private void attack() {
+        attack(weiWarriors);
+        attack(shuWarriors);
+        attack(wuWarriors);
+        attack(qunWarriors);
+    }
+
+    private void attack(List<Warrior> warriors) {
         for (Territory terr : mapTerrs) {
-//            advance(weiWarriors, terr);
-            advance(shuWarriors, terr);
-//            advance(wuWarriors, terr);
-//            advance(qunWarriors, terr);
+            for (Warrior warrior : warriors) {
+                if (warrior.getNation() == terr.nation) break;
+                if (warrior.isAttacked()) continue;
+                if (checkSuccess(terr, warrior)) {
+                    terr.nation = warrior.getNation();
+                } else {
+                    checkBorder(warrior);
+                }
+            }
         }
     }
 
-    private void advance(List<Warrior> warriors, Territory territory) {
-        terrPath.reset();
-        terrPath.addRect(territory.rectF, Path.Direction.CW);
-        for (Warrior warrior : warriors) {
-            double xSpeed;
-            double ySpeed;
-            double k = Math.tan(Math.toRadians(warrior.angle));
-            double b = 0;//warrior.currPoint.y - k * warrior.currPoint.x;
-            double l = warrior.speed;
-            double A = 1 + k * k;
-            double B = 2 * k;
-            double C = b * b - l * l;
-            double sqrt = Math.sqrt(B * B - 4 * A * C);
-            double sx = (-B + sqrt) / (2 * A);
-            double xAbs = Math.abs(sx/* - warrior.currPoint.x*/);
-            if (warrior.angle < 90 || warrior.angle > 270) {
-                xSpeed = -xAbs;
-            } else {
-                xSpeed = xAbs;
-            }
-            double yAbs = Math.abs(k * sx + b);
-            if (warrior.angle < 180) {
-                ySpeed = -yAbs;
-            } else {
-                ySpeed = yAbs;
-            }
-            float x = warrior.currPoint.x, y = warrior.currPoint.y;
-            float radius = warrior.radius;
-            warriorPath.reset();
-            for (int i = 0; i < warrior.speed; i++) {
-                x += xSpeed;
-                y += ySpeed;
-//                warriorPath.addCircle(x, y, radius, Path.Direction.CW);
-//                if (terrPath.op(warriorPath, Path.Op.XOR)) {
-//                    if (territory.rectF.contains(x + radius, y)) {
-//                        warrior.angle
-//                    } else if (territory.rectF.contains(x - radius, y)) {
-//
-//                    } else if (territory.rectF.contains(x, y - radius)) {
-//
-//                    } else if (territory.rectF.contains(x, y + radius)) {
-//
-//                    } else {
-//
-//                    }
-//                    break;
-//                }
-            }
-            warrior.currPoint.x = x;
-            warrior.currPoint.y = y;
+    private void checkBorder(Warrior warrior) {
+        float left = warrior.getX() - warrior.getRadius();
+        float right = warrior.getX() + warrior.getRadius();
+        float top = warrior.getY() - warrior.getRadius();
+        float bottom = warrior.getY() + warrior.getRadius();
+        if (top <= 0) {
+            warrior.setCurrPoint(warrior.getX(), warrior.getRadius());
+            warrior.updateAngle(1);
+        } else if (bottom >= getHeight()) {
+            warrior.setCurrPoint(warrior.getX(), getHeight() - warrior.getRadius());
+            warrior.updateAngle(3);
+        } else if (left <= 0) {
+            warrior.setCurrPoint(warrior.getRadius(), warrior.getY());
+            warrior.updateAngle(0);
+        } else if (right >= getWidth()){
+            warrior.setCurrPoint(getWidth() - warrior.getRadius(), warrior.getY());
+            warrior.updateAngle(2);
         }
+    }
+
+    private boolean checkSuccess(Territory terr, Warrior warrior) {
+        float tx = terr.rectF.centerX();
+        float ty = terr.rectF.centerY();
+        float wx = warrior.getX();
+        float wy = warrior.getY();
+        float k = (wy - ty) / (wx - tx);
+        float b = ty - k * tx;
+        float r = warrior.getRadius() * warrior.getRadius();
+        float tSize = terr.rectF.height() / 2;
+
+        float topY = ty - tSize;
+        float topX = (topY - b) / k;
+        if (topX >= tx - tSize && topX <= tx + tSize) {
+            float topL = (wx - topX) * (wx - topX) + (wy - topY) * (wy - topY);
+            if (topL <= r) {
+                float leftX = tx - tSize;
+                float leftY = leftX * k + b;
+                if (leftY >= ty - tSize && leftY <= ty + tSize) {
+                    float leftL = (wx - leftX) * (wx - leftX) + (wy - leftY) * (wy - leftY);
+                    if (leftL <= r) {
+                        warrior.updateAngle(-1);
+                        return true;
+                    }
+                }
+
+                float rightX = tx + tSize;
+                float rightY = rightX * k + b;
+                if (rightY >= ty - tSize && rightY <= ty + tSize) {
+                    float rightL = (wx - rightX) * (wx - rightX) + (wy - rightY) * (wy - rightY);
+                    if (rightL <= r) {
+                        warrior.updateAngle(-1);
+                        return true;
+                    }
+                }
+
+                warrior.updateAngle(1);
+                return true;
+            }
+        }
+
+        float bottomY = ty + tSize;
+        float bottomX = (bottomY - b) / k;
+        if (bottomX >= tx - tSize && bottomX <= tx + tSize) {
+            float bottomL = (wx - bottomX) * (wx - bottomX) + (wy - bottomY) * (wy - bottomY);
+            if (bottomL <= r) {
+                float leftX = tx - tSize;
+                float leftY = leftX * k + b;
+                if (leftY >= ty - tSize && leftY <= ty + tSize) {
+                    float leftL = (wx - leftX) * (wx - leftX) + (wy - leftY) * (wy - leftY);
+                    if (leftL <= r) {
+                        warrior.updateAngle(-1);
+                        return true;
+                    }
+                }
+
+                float rightX = tx + tSize;
+                float rightY = rightX * k + b;
+                if (rightY >= ty - tSize && rightY <= ty + tSize) {
+                    float rightL = (wx - rightX) * (wx - rightX) + (wy - rightY) * (wy - rightY);
+                    if (rightL <= r) {
+                        warrior.updateAngle(-1);
+                        return true;
+                    }
+                }
+
+                warrior.updateAngle(3);
+                return true;
+            }
+        }
+
+        float leftX = tx - tSize;
+        float leftY = leftX * k + b;
+        if (leftY >= ty - tSize && leftY <= ty + tSize) {
+            float leftL = (wx - leftX) * (wx - leftX) + (wy - leftY) * (wy - leftY);
+            if (leftL <= r) {
+                warrior.updateAngle(0);
+                return true;
+            }
+        }
+
+        float rightX = tx + tSize;
+        float rightY = rightX * k + b;
+        if (rightY >= ty - tSize && rightY <= ty + tSize) {
+            float rightL = (wx - rightX) * (wx - rightX) + (wy - rightY) * (wy - rightY);
+            if (rightL <= r) {
+                warrior.updateAngle(2);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void advance(List<Warrior> warriors) {
         for (Warrior warrior : warriors) {
-            float xSpeed = warrior.speed;
-            float ySpeed = warrior.speed;
-            if (warrior.angle < 180) {
-                ySpeed *= -1;
-            }
-            if (warrior.angle < 90 || warrior.angle > 270) {
-                xSpeed *= -1;
-            }
-            warrior.prevPoint.x = warrior.currPoint.x;
-            warrior.prevPoint.y = warrior.currPoint.y;
-            warrior.currPoint.x += xSpeed;
-            warrior.currPoint.y += ySpeed;
+            double xSpeed = warrior.getXSpeed();
+            double ySpeed = warrior.getYSpeed();
+            double wx = warrior.getX() + xSpeed;
+            double wy = warrior.getY() + ySpeed;
+            warrior.setCurrPoint((float) wx, (float) wy);
         }
     }
 
@@ -361,12 +370,88 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     public void run() {
         while (isDraw) {
             try {
-                attack();
+                calculate();
                 drawUI();
                 Thread.sleep(10);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int height = MeasureSpec.getSize(heightMeasureSpec);
+        float size = height * 1f / rowCount;
+        setMeasuredDimension((int) (size * lineCount), (int) (size * rowCount));
+    }
+
+    public void addWarrior(int nation) {
+        float size = getHeight() / (rowCount * 2f);
+        float x, y, angle;
+        switch (nation) {
+            case 1:
+                x = weiCapital.rectF.centerX();
+                y = weiCapital.rectF.centerY();
+                break;
+            case 2:
+                x = shuCapital.rectF.centerX();
+                y = shuCapital.rectF.centerY();
+                break;
+            case 3:
+                x = wuCapital.rectF.centerX();
+                y = wuCapital.rectF.centerY();
+                break;
+            default:
+                x = qunCapital.rectF.centerX();
+                y = qunCapital.rectF.centerY();
+                break;
+        }
+        Random random = new Random();
+        do {
+            angle = random.nextInt(360);
+        } while (angle % 90 == 0);
+        Warrior warrior = new Warrior(1, angle, size, nation, new PointF(x, y));
+        switch (nation) {
+            case 1:
+                weiWarriors.add(warrior);
+                break;
+            case 2:
+                shuWarriors.add(warrior);
+                break;
+            case 3:
+                wuWarriors.add(warrior);
+                break;
+            default:
+                qunWarriors.add(warrior);
+                break;
+        }
+    }
+
+    public void addSpeed(int nation) {
+        Random random = new Random();
+        float speed = random.nextFloat();
+        switch (nation) {
+            case 1:
+                for (Warrior w : weiWarriors) {
+                    w.setSpeed(w.getSpeed() + speed);
+                }
+                break;
+            case 2:
+                for (Warrior w : shuWarriors) {
+                    w.setSpeed(w.getSpeed() + speed);
+                }
+                break;
+            case 3:
+                for (Warrior w : wuWarriors) {
+                    w.setSpeed(w.getSpeed() + speed);
+                }
+                break;
+            default:
+                for (Warrior w : qunWarriors) {
+                    w.setSpeed(w.getSpeed() + speed);
+                }
+                break;
         }
     }
 }
