@@ -12,17 +12,20 @@ public class Warrior {
     private float angle;
     private float radius;
     private int nation;
-    private final PointF prevPoint;
     private final PointF currPoint;
     private boolean attacked = false;
+    private final Random random = new Random();
 
-    public Warrior(float speed, float angle, float radius, int nation, PointF currPoint) {
-        this.speed = speed;
+    public Warrior(Territory territory) {
+        this.speed = 3;
+        this.radius = 25;
+        this.nation = territory.nation;
+        this.currPoint = new PointF(territory.rectF.centerX(), territory.rectF.centerY());
+        int angle;
+        do {
+            angle = random.nextInt(360);
+        } while (angle % 90 == 0);
         this.angle = angle;
-        this.radius = radius;
-        this.nation = nation;
-        this.currPoint = currPoint;
-        this.prevPoint = new PointF();
         updateSpeed();
     }
 
@@ -94,8 +97,6 @@ public class Warrior {
     }
 
     public void setCurrPoint(float x, float y) {
-        this.prevPoint.y = currPoint.y;
-        this.prevPoint.x = currPoint.x;
         this.currPoint.x = x;
         this.currPoint.y = y;
         this.attacked = false;
@@ -107,14 +108,6 @@ public class Warrior {
 
     public float getY() {
         return currPoint.y;
-    }
-
-    public float getPrevX() {
-        return prevPoint.x;
-    }
-
-    public float getPrevY() {
-        return prevPoint.y;
     }
 
     public void updateAngle(int type) {
@@ -135,7 +128,6 @@ public class Warrior {
                 setAngle(360 - angle + 180);
             }
         } else {
-            Random random = new Random();
             int angle;
             do {
                 angle = random.nextInt(90);

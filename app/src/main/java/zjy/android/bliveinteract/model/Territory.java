@@ -6,5 +6,7 @@ public class Territory {
 
     public RectF rectF;
     public int nation;
+    public boolean isCapital;
+    public int hp;
 
 }
