@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
+import zjy.android.bliveinteract.model.GameInfo;
 import zjy.android.bliveinteract.model.Territory;
 import zjy.android.bliveinteract.model.Warrior;
 
@@ -28,6 +31,7 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     private Map<Integer, Paint> warriorPatin;
     private Map<Integer, Paint> terrPaint;
     private Map<Integer, Territory> capitalMap;
+    private Paint nationNamePaint;
 
     private final int lineCount = 50;
     private final int rowCount = 35;
@@ -36,10 +40,11 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
             "#8E20FF", "#804904"};
     private final String[] terrColorStr = new String[]{"#FFFFFF", "#641678FF", "#64FF3715", "#64FFDA17", "#6400CFCF", "#6444D75C",
             "#648E20FF", "#64804904"};
+    public static final String[] nationName = new String[]{"", "秦", "楚", "燕", "韩", "赵", "魏", "齐"};
 
     private final int[][] capitalPoint = new int[][]{{12, 5}, {38, 5}, {12, 30}, {38, 30}, {25, 18}, {6, 18}, {44, 18}};
 
-    private final int nationCount = 4;
+    private final int nationCount = 7;
 
     public WarGameView(Context context) {
         super(context);
@@ -67,6 +72,11 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
         warriorMap = new HashMap<>();
         // 首都
         capitalMap = new HashMap<>();
+
+        nationNamePaint = new Paint();
+        nationNamePaint.setColor(Color.parseColor("#64999999"));
+        nationNamePaint.setTextSize(120);
+        nationNamePaint.setFakeBoldText(true);
 
         // 地图paint
         terrPaint = new HashMap<>();
@@ -138,15 +148,23 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
             for (Territory info : lineTerr) {
                 Paint paint = terrPaint.get(info.nation);
                 canvas.drawRect(info.rectF, paint);
-                if (info.isCapital) {
-                    Paint mapPaint = terrPaint.get(0);
-                    String hp = info.hp + "";
-                    assert mapPaint != null;
-                    float tx = mapPaint.measureText(hp) / 2;
-                    Paint.FontMetrics fontMetrics = mapPaint.getFontMetrics();
-                    float ty = (fontMetrics.bottom - fontMetrics.ascent) / 2 - fontMetrics.bottom;
-                    canvas.drawText(hp, info.rectF.centerX() - tx, info.rectF.centerY() + ty, mapPaint);
-                }
+            }
+        }
+        for (Territory capital : capitalMap.values()) {
+            if (capital.isCapital) {
+                String name = nationName[capital.nation];
+                float nx = nationNamePaint.measureText(name) / 2;
+                Paint.FontMetrics nfm = nationNamePaint.getFontMetrics();
+                float ny = (nfm.bottom - nfm.ascent) / 2 - nfm.bottom;
+                canvas.drawText(name, capital.rectF.centerX() - nx, capital.rectF.centerY() + ny, nationNamePaint);
+
+                Paint mapPaint = terrPaint.get(0);
+                String hp = capital.hp + "";
+                assert mapPaint != null;
+                float tx = mapPaint.measureText(hp) / 2;
+                Paint.FontMetrics fontMetrics = mapPaint.getFontMetrics();
+                float ty = (fontMetrics.bottom - fontMetrics.ascent) / 2 - fontMetrics.bottom;
+                canvas.drawText(hp, capital.rectF.centerX() - tx, capital.rectF.centerY() + ty, mapPaint);
             }
         }
     }
@@ -185,67 +203,6 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
             mapTerrs[point[0]][point[1] - 1].nation = i;
             capitalMap.put(i, weiCapital);
         }
-
-//        int lineFourOne = lineCount / 4;
-//        int rowFourOne = rowCount / 4;
-//        int lineFourThree = lineFourOne * 3;
-//        int rowFourThree = rowFourOne * 3;
-//
-//        Territory weiCapital = mapTerrs[lineFourOne][rowFourOne];
-//        weiCapital.nation = 1;
-//        weiCapital.isCapital = true;
-//        weiCapital.hp = 5;
-//        mapTerrs[lineFourOne + 1][rowFourOne + 1].nation = 1;
-//        mapTerrs[lineFourOne + 1][rowFourOne - 1].nation = 1;
-//        mapTerrs[lineFourOne + 1][rowFourOne].nation = 1;
-//        mapTerrs[lineFourOne - 1][rowFourOne + 1].nation = 1;
-//        mapTerrs[lineFourOne - 1][rowFourOne - 1].nation = 1;
-//        mapTerrs[lineFourOne - 1][rowFourOne].nation = 1;
-//        mapTerrs[lineFourOne][rowFourOne + 1].nation = 1;
-//        mapTerrs[lineFourOne][rowFourOne - 1].nation = 1;
-//        capitalMap.put(1, weiCapital);
-//
-//        Territory shuCapital = mapTerrs[lineFourOne][rowFourThree];
-//        shuCapital.nation = 2;
-//        shuCapital.isCapital = true;
-//        shuCapital.hp = 5;
-//        mapTerrs[lineFourOne + 1][rowFourThree + 1].nation = 2;
-//        mapTerrs[lineFourOne + 1][rowFourThree - 1].nation = 2;
-//        mapTerrs[lineFourOne + 1][rowFourThree].nation = 2;
-//        mapTerrs[lineFourOne - 1][rowFourThree + 1].nation = 2;
-//        mapTerrs[lineFourOne - 1][rowFourThree - 1].nation = 2;
-//        mapTerrs[lineFourOne - 1][rowFourThree].nation = 2;
-//        mapTerrs[lineFourOne][rowFourThree + 1].nation = 2;
-//        mapTerrs[lineFourOne][rowFourThree - 1].nation = 2;
-//        capitalMap.put(2, shuCapital);
-//
-//        Territory wuCapital = mapTerrs[lineFourThree][rowFourThree];
-//        wuCapital.nation = 3;
-//        wuCapital.isCapital = true;
-//        wuCapital.hp = 5;
-//        mapTerrs[lineFourThree + 1][rowFourThree + 1].nation = 3;
-//        mapTerrs[lineFourThree + 1][rowFourThree - 1].nation = 3;
-//        mapTerrs[lineFourThree + 1][rowFourThree].nation = 3;
-//        mapTerrs[lineFourThree - 1][rowFourThree + 1].nation = 3;
-//        mapTerrs[lineFourThree - 1][rowFourThree - 1].nation = 3;
-//        mapTerrs[lineFourThree - 1][rowFourThree].nation = 3;
-//        mapTerrs[lineFourThree][rowFourThree + 1].nation = 3;
-//        mapTerrs[lineFourThree][rowFourThree - 1].nation = 3;
-//        capitalMap.put(3, wuCapital);
-//
-//        Territory qunCapital = mapTerrs[lineFourThree][rowFourOne];
-//        qunCapital.nation = 4;
-//        qunCapital.isCapital = true;
-//        qunCapital.hp = 5;
-//        mapTerrs[lineFourThree + 1][rowFourOne + 1].nation = 4;
-//        mapTerrs[lineFourThree + 1][rowFourOne - 1].nation = 4;
-//        mapTerrs[lineFourThree + 1][rowFourOne].nation = 4;
-//        mapTerrs[lineFourThree - 1][rowFourOne + 1].nation = 4;
-//        mapTerrs[lineFourThree - 1][rowFourOne - 1].nation = 4;
-//        mapTerrs[lineFourThree - 1][rowFourOne].nation = 4;
-//        mapTerrs[lineFourThree][rowFourOne + 1].nation = 4;
-//        mapTerrs[lineFourThree][rowFourOne - 1].nation = 4;
-//        capitalMap.put(4, qunCapital);
     }
 
     /**
@@ -269,10 +226,12 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     private void attack(List<Warrior> warriors) {
         for (Territory[] lineTerr : mapTerrs) {
             for (Territory terr : lineTerr) {
+                terr.attacked = false;
                 for (Warrior warrior : warriors) {
                     if (warrior.getNation() == terr.nation) break;
                     if (warrior.isAttacked()) continue;
                     if (checkSuccess(terr, warrior)) {
+                        if (terr.attacked) continue;
                         if (terr.isCapital) {
                             if (--terr.hp == 0) {
                                 terr.isCapital = false;
@@ -313,16 +272,16 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
         float bottom = warrior.getY() + warrior.getRadius();
         if (top <= 0) {
             warrior.setCurrPoint(warrior.getX(), warrior.getRadius());
-            warrior.updateAngle(1);
+            warrior.updateAngle(3);
         } else if (bottom >= getHeight()) {
             warrior.setCurrPoint(warrior.getX(), getHeight() - warrior.getRadius());
-            warrior.updateAngle(3);
+            warrior.updateAngle(1);
         } else if (left <= 0) {
             warrior.setCurrPoint(warrior.getRadius(), warrior.getY());
-            warrior.updateAngle(0);
+            warrior.updateAngle(2);
         } else if (right >= getWidth()) {
             warrior.setCurrPoint(getWidth() - warrior.getRadius(), warrior.getY());
-            warrior.updateAngle(2);
+            warrior.updateAngle(0);
         }
     }
 
@@ -348,27 +307,7 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
         if (topX >= tx - tSize && topX <= tx + tSize) {
             float topL = (wx - topX) * (wx - topX) + (wy - topY) * (wy - topY);
             if (topL <= r) {
-                float leftX = tx - tSize;
-                float leftY = leftX * k + b;
-                if (leftY >= ty - tSize && leftY <= ty + tSize) {
-                    float leftL = (wx - leftX) * (wx - leftX) + (wy - leftY) * (wy - leftY);
-                    if (leftL <= r) {
-                        warrior.updateAngle(-1);
-                        return true;
-                    }
-                }
-
-                float rightX = tx + tSize;
-                float rightY = rightX * k + b;
-                if (rightY >= ty - tSize && rightY <= ty + tSize) {
-                    float rightL = (wx - rightX) * (wx - rightX) + (wy - rightY) * (wy - rightY);
-                    if (rightL <= r) {
-                        warrior.updateAngle(-1);
-                        return true;
-                    }
-                }
-
-                warrior.updateAngle(1);
+                warrior.updateAngle(3);
                 return true;
             }
         }
@@ -378,27 +317,7 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
         if (bottomX >= tx - tSize && bottomX <= tx + tSize) {
             float bottomL = (wx - bottomX) * (wx - bottomX) + (wy - bottomY) * (wy - bottomY);
             if (bottomL <= r) {
-                float leftX = tx - tSize;
-                float leftY = leftX * k + b;
-                if (leftY >= ty - tSize && leftY <= ty + tSize) {
-                    float leftL = (wx - leftX) * (wx - leftX) + (wy - leftY) * (wy - leftY);
-                    if (leftL <= r) {
-                        warrior.updateAngle(-1);
-                        return true;
-                    }
-                }
-
-                float rightX = tx + tSize;
-                float rightY = rightX * k + b;
-                if (rightY >= ty - tSize && rightY <= ty + tSize) {
-                    float rightL = (wx - rightX) * (wx - rightX) + (wy - rightY) * (wy - rightY);
-                    if (rightL <= r) {
-                        warrior.updateAngle(-1);
-                        return true;
-                    }
-                }
-
-                warrior.updateAngle(3);
+                warrior.updateAngle(1);
                 return true;
             }
         }
@@ -408,7 +327,7 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
         if (leftY >= ty - tSize && leftY <= ty + tSize) {
             float leftL = (wx - leftX) * (wx - leftX) + (wy - leftY) * (wy - leftY);
             if (leftL <= r) {
-                warrior.updateAngle(0);
+                warrior.updateAngle(2);
                 return true;
             }
         }
@@ -418,7 +337,7 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
         if (rightY >= ty - tSize && rightY <= ty + tSize) {
             float rightL = (wx - rightX) * (wx - rightX) + (wy - rightY) * (wy - rightY);
             if (rightL <= r) {
-                warrior.updateAngle(2);
+                warrior.updateAngle(0);
                 return true;
             }
         }
@@ -446,12 +365,44 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
         while (isDraw) {
             try {
                 calculate();
+                updateData();
                 drawUI();
                 Thread.sleep(10);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void updateData() {
+        Flowable.just(0)
+                .subscribeOn(Schedulers.io())
+                .doOnComplete(() -> {
+                    if (onUpdateGameInfoListener != null) {
+                        List<GameInfo> gameInfos = new ArrayList<>();
+                        for (int i = 1; i <= nationCount; i++) {
+                            GameInfo info = new GameInfo();
+                            info.nation = i;
+                            List<Warrior> warriors = warriorMap.get(i);
+                            if (warriors == null) {
+                                info.warriorNum = 0;
+                            } else {
+                                info.warriorNum = warriors.size();
+                            }
+                            info.capitalNum = capitalMap.get(i).hp;
+                            int terrNum = 0;
+                            for (Territory[] item : mapTerrs) {
+                                for (Territory t : item) {
+                                    if (i == t.nation) terrNum++;
+                                }
+                            }
+                            info.terrNum = terrNum;
+                            gameInfos.add(info);
+                        }
+                        onUpdateGameInfoListener.onUpdate(gameInfos);
+                    }
+                })
+                .subscribe();
     }
 
     @Override
@@ -482,5 +433,15 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
         for (Warrior w : list) {
             w.setSpeed(w.getSpeed() + 1);
         }
+    }
+
+    private OnUpdateGameInfoListener onUpdateGameInfoListener;
+
+    public void setOnUpdateGameInfoListener(OnUpdateGameInfoListener onUpdateGameInfoListener) {
+        this.onUpdateGameInfoListener = onUpdateGameInfoListener;
+    }
+
+    public interface OnUpdateGameInfoListener {
+        void onUpdate(List<GameInfo> gameInfos);
     }
 }

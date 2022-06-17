@@ -9,11 +9,13 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +23,7 @@ import io.reactivex.Flowable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import zjy.android.bliveinteract.R;
 import zjy.android.bliveinteract.contract.MainContract;
+import zjy.android.bliveinteract.model.GameInfo;
 import zjy.android.bliveinteract.model.UserDanMu;
 import zjy.android.bliveinteract.utils.ToastUtils;
 import zjy.android.bliveinteract.widget.WarGameView;
@@ -57,6 +60,8 @@ public class RoomActivity extends FragmentActivity {
     private long roomId;
 
     private WarGameView warGameView;
+
+    private TextView collectView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -95,6 +100,14 @@ public class RoomActivity extends FragmentActivity {
             warGameView.addSpeed(4);
         });
         random();
+        collectView = findViewById(R.id.collect);
+        warGameView.setOnUpdateGameInfoListener(gameInfos -> {
+            StringBuilder builder = new StringBuilder();
+            for (GameInfo info : gameInfos) {
+                builder.append(info.toString()).append("\n");
+            }
+            runOnUiThread(() -> collectView.setText(builder.toString()));
+        });
     }
 
     Random random = new Random();
@@ -102,35 +115,42 @@ public class RoomActivity extends FragmentActivity {
     private void random() {
         Flowable.timer(3, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .map(aLong -> random.nextInt(8))
+                .map(aLong -> random.nextInt())
                 .doOnNext(integer -> {
-                    switch (integer) {
-                        case 0:
-                            findViewById(R.id.wei_warrior).performClick();
-                            break;
-                        case 1:
-                            findViewById(R.id.shu_warrior).performClick();
-                            break;
-                        case 2:
-                            findViewById(R.id.wu_warrior).performClick();
-                            break;
-                        case 3:
-                            findViewById(R.id.qun_warrior).performClick();
-                            break;
-                        case 4:
-                            findViewById(R.id.wei_speed).performClick();
-                            break;
-                        case 5:
-                            findViewById(R.id.shu_speed).performClick();
-                            break;
-                        case 6:
-                            findViewById(R.id.wu_speed).performClick();
-                            break;
-                        case 7:
-                            findViewById(R.id.qun_speed).performClick();
-                            break;
+                    if (integer % 2 == 0) {
+                        warGameView.addWarrior(integer % 7 + 1);
+                    } else {
+                        warGameView.addSpeed(integer % 7 + 1);
                     }
                 })
+//                .doOnNext(integer -> {
+//                    switch (integer) {
+//                        case 0:
+//                            findViewById(R.id.wei_warrior).performClick();
+//                            break;
+//                        case 1:
+//                            findViewById(R.id.shu_warrior).performClick();
+//                            break;
+//                        case 2:
+//                            findViewById(R.id.wu_warrior).performClick();
+//                            break;
+//                        case 3:
+//                            findViewById(R.id.qun_warrior).performClick();
+//                            break;
+//                        case 4:
+//                            findViewById(R.id.wei_speed).performClick();
+//                            break;
+//                        case 5:
+//                            findViewById(R.id.shu_speed).performClick();
+//                            break;
+//                        case 6:
+//                            findViewById(R.id.wu_speed).performClick();
+//                            break;
+//                        case 7:
+//                            findViewById(R.id.qun_speed).performClick();
+//                            break;
+//                    }
+//                })
                 .doOnComplete(this::random).subscribe();
     }
 

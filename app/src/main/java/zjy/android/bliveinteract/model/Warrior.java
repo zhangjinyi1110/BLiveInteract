@@ -1,6 +1,7 @@
 package zjy.android.bliveinteract.model;
 
 import android.graphics.PointF;
+import android.util.Log;
 
 import java.util.Random;
 
@@ -128,6 +129,7 @@ public class Warrior {
                 setAngle(360 - angle + 180);
             }
         } else {
+            float temp = angle;
             int angle;
             do {
                 angle = random.nextInt(90);
@@ -141,6 +143,7 @@ public class Warrior {
             } else {
                 angle = 180 - angle;
             }
+            Log.e("Warrior", "updateAngle: " + nation + "/" + angle + "/" + temp);
             setAngle(angle);
         }
 

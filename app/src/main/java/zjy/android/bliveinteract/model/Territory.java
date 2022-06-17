@@ -8,5 +8,6 @@ public class Territory {
     public int nation;
     public boolean isCapital;
     public int hp;
+    public boolean attacked;
 
 }

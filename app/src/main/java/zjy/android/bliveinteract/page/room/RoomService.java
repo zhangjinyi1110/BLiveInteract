@@ -178,8 +178,9 @@ public class RoomService extends Service {
             PING_BUFFER.writeInt(2);
             PING_BUFFER.writeInt(1);
             Flowable.timer(30, TimeUnit.SECONDS)
-                    .doOnComplete(() -> webSocket.send(PING_BUFFER.readByteString()))
-                    .doOnComplete(this::ping)
+                    .filter(aLong -> webSocket == null)
+                    .doOnNext((a) -> webSocket.send(PING_BUFFER.readByteString()))
+                    .doOnNext((a) -> ping())
                     .subscribe();
         }
 
@@ -208,6 +209,12 @@ public class RoomService extends Service {
         @Override
         public void onConnectFail(int code, String reason) {
             Log.e(TAG, "onConnectFail: " + code + "/" + reason);
+            try {
+                webSocket.reconnect();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.e(TAG, "onConnectFail: reconnect error: " + e);
+            }
         }
 
         @Override
