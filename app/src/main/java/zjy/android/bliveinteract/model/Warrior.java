@@ -16,8 +16,11 @@ public class Warrior {
     private final PointF currPoint;
     private boolean attacked = false;
     private final Random random = new Random();
+    private final UserDanMu userDanMu;
+    private int captureCount;
 
-    public Warrior(Territory territory) {
+    public Warrior(Territory territory, UserDanMu userDanMu) {
+        this.userDanMu = userDanMu;
         this.speed = 3;
         this.radius = 25;
         this.nation = territory.nation;
@@ -28,6 +31,18 @@ public class Warrior {
         } while (angle % 90 == 0);
         this.angle = angle;
         updateSpeed();
+    }
+
+    public int getCaptureCount() {
+        return captureCount;
+    }
+
+    public void capture() {
+        captureCount++;
+    }
+
+    public UserDanMu getUserDanMu() {
+        return userDanMu;
     }
 
     private void updateSpeed() {
@@ -109,6 +124,14 @@ public class Warrior {
 
     public float getY() {
         return currPoint.y;
+    }
+
+    public void updateAngle(int start, int end) {
+        int temp;
+        do {
+            temp = random.nextInt(90);
+        } while (temp % 90 == 0);
+        setAngle(start + temp);
     }
 
     public void updateAngle(int type) {

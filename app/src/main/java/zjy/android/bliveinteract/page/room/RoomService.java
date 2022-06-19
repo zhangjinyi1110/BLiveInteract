@@ -12,6 +12,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -29,9 +30,11 @@ import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 import okio.Buffer;
 import okio.ByteString;
+import zjy.android.bliveinteract.App;
 import zjy.android.bliveinteract.contract.MainContract;
 import zjy.android.bliveinteract.contract.RoomContract;
 import zjy.android.bliveinteract.model.UserDanMu;
+import zjy.android.bliveinteract.network.RetrofitHelper;
 import zjy.android.bliveinteract.utils.ZLibUtils;
 import zjy.android.zwebsocket.IConnectCallback;
 import zjy.android.zwebsocket.IReadCallback;
@@ -111,6 +114,8 @@ public class RoomService extends Service {
         private ZWebSocket webSocket;
         private final Buffer PING_BUFFER = new Buffer();
         private final Buffer MESSAGE = new Buffer();
+
+        private final Gson gson = new Gson();
 
         public RoomHandler(@NonNull Looper looper) {
             super(looper);
@@ -199,6 +204,13 @@ public class RoomService extends Service {
         @Override
         public void onClosing(int code, String reason) {
             Log.e(TAG, "onClosing: " + code + "/" + reason);
+            try {
+                Thread.sleep(100);
+                connectWebSocket();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e(TAG, "onConnectFail: reconnect error: " + e);
+            }
         }
 
         @Override
@@ -209,12 +221,6 @@ public class RoomService extends Service {
         @Override
         public void onConnectFail(int code, String reason) {
             Log.e(TAG, "onConnectFail: " + code + "/" + reason);
-            try {
-                webSocket.reconnect();
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.e(TAG, "onConnectFail: reconnect error: " + e);
-            }
         }
 
         @Override
@@ -235,10 +241,13 @@ public class RoomService extends Service {
                     if (pVersion == 2) {
                         resolveData(MESSAGE.readByteArray(total - headLen));
                     } else if (pVersion <= 1) {
-
+                        MESSAGE.readByteArray(total - headLen);
                     }
                 } else if (opcode == 3) {
+                    MESSAGE.readByteArray(total - headLen);
                     Log.e(TAG, "onRead: 人气值：" + MESSAGE.readInt());
+                } else {
+                    MESSAGE.readByteArray(total - headLen);
                 }
             } catch (IOException e) {
                 Log.e(TAG, "onRead: " + e);
@@ -255,7 +264,7 @@ public class RoomService extends Service {
             String[] jsonList = data.split("===");
             for (String item : jsonList) {
                 if (item.startsWith("{\"")) {
-                    Map<String, Object> map = new Gson().fromJson(item, new TypeToken<Map<String,
+                    Map<String, Object> map = gson.fromJson(item, new TypeToken<Map<String,
                             Object>>() {
                     }.getType());
                     String cmd = (String) map.get("cmd");
@@ -264,26 +273,80 @@ public class RoomService extends Service {
                     } else if ("COMBO_SEND".equals(cmd)) {
                         Log.e("TAG", "onRead1: COMBO_SEND " + map);
                     } else if ("SEND_GIFT".equals(cmd)) {
-                        Log.e("TAG", "onRead2: COMBO_SEND " + map);
-                        Map<String, Object> combo = (Map<String, Object>) map.get("data");
+//                        Map<String, Object> combo = (Map<String, Object>) map.get("data");
+                        Log.e("TAG", "onRead2: COMBO_SEND " + gson.toJson(map.get("data")));
+                        handleCombo((Map<String, Object>) map.get("data"));
+                    } else if ("WELCOME".equals(cmd)) {
+                        Log.e("TAG", "onRead2: WELCOME " + map);
+                    } else if ("INTERACT_WORD".equals(cmd)) {
+                        interactWord((Map<String, Object>)map.get("data"));
                     }
                 }
             }
 
         }
 
+        private void handleCombo(Map<String, Object> data) {
+            long uid = (long) ((double) data.get("uid"));
+            long giftId = (long) ((double) data.get("giftId"));
+            String giftName = (String) data.get("giftName");
+            int num = (int) ((double) data.get("num"));
+            Log.e(TAG, "handleCombo: " + giftId + "/" + giftName + "/" + num);
+            UserDanMu userDanMu = new UserDanMu(uid, giftName, giftId);
+            if (handler != null) {
+                Message message = Message.obtain();
+                message.obj = userDanMu;
+                message.what = MainContract.WHAT_COMBO;
+                handler.sendMessage(message);
+            }
+        }
+
+        private final Map<Long, String> imgMap = new HashMap<>();
+
+        private void interactWord(Map<String, Object> data) {
+            long uid = (long) ((double) data.get("uid"));
+            RetrofitHelper.createUserApi()
+                    .userInfo(uid)
+                    .retry()
+                    .filter(userInfo -> userInfo.code == 200)
+                    .map(userInfo -> userInfo.data)
+                    .doOnNext(dataDTO -> imgMap.put(dataDTO.uid, dataDTO.avatar))
+                    .doOnNext(dataDTO -> Glide.with(App.getApp()).load(dataDTO.avatar).submit())
+                    .subscribe();
+        }
+
         @SuppressWarnings("unchecked")
         private void handleDanMu(List<Object> info) {
             String danMu = (String) info.get(1);
             List<Object> user = (List<Object>) info.get(2);
-            long userid = (long) user.get(0);
+            long userid = (long) ((double) user.get(0));
             String username = (String) user.get(1);
-            UserDanMu userDanMu = new UserDanMu(userid, username, danMu);
-            if (handler != null) {
-                Message message = Message.obtain();
-                message.obj = userDanMu;
-                message.what = MainContract.WHAT_DAN_MU;
-                handler.sendMessage(message);
+            UserDanMu userDanMu = new UserDanMu(userid, username, danMu, imgMap.get(userid));
+            if (imgMap.containsKey(userid)) {
+                if (handler != null) {
+                    Message message = Message.obtain();
+                    message.obj = userDanMu;
+                    message.what = MainContract.WHAT_DAN_MU;
+                    handler.sendMessage(message);
+                }
+            } else {
+                RetrofitHelper.createUserApi()
+                        .userInfo(userid)
+                        .retry()
+                        .filter(userInfo -> userInfo.code == 200)
+                        .map(userInfo -> userInfo.data)
+                        .doOnNext(dataDTO -> imgMap.put(dataDTO.uid, dataDTO.avatar))
+                        .doOnNext(dataDTO -> Glide.with(App.getApp()).asBitmap().load(dataDTO.avatar).submit())
+                        .doOnNext(dataDTO -> userDanMu.img = dataDTO.avatar)
+                        .doOnComplete(() -> {
+                            if (handler != null) {
+                                Message message = Message.obtain();
+                                message.obj = userDanMu;
+                                message.what = MainContract.WHAT_DAN_MU;
+                                handler.sendMessage(message);
+                            }
+                        })
+                        .subscribe();
             }
         }
     }

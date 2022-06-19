@@ -24,6 +24,16 @@ public class RetrofitHelper {
                 .create(Api.class);
     }
 
+    public static Api createUserApi() {
+        return new Retrofit.Builder()
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .baseUrl("https://tenapi.cn/")
+                .client(client())
+                .build()
+                .create(Api.class);
+    }
+
     private static OkHttpClient client() {
         if (client == null) {
             client = new OkHttpClient.Builder()

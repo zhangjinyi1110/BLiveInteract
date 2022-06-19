@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
         editText = findViewById(R.id.room_id);
         editText.setOnEditorActionListener((textView, i, keyEvent) -> checkRoomId(textView.getText()));
 
-        checkRoomId("6");
+        checkRoomId("25143941");
     }
 
     private boolean checkRoomId(CharSequence text) {
