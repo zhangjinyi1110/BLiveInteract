@@ -20,7 +20,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Flowable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import zjy.android.bliveinteract.R;
 import zjy.android.bliveinteract.adapter.RankingAdapter;
 import zjy.android.bliveinteract.contract.MainContract;
@@ -84,8 +89,29 @@ public class RoomActivity extends FragmentActivity {
         initBtn();
     }
 
+    private TextView timeView;
+    private Disposable disposable;
+
+    private void timeout() {
+        if (disposable != null && !disposable.isDisposed()) {
+            disposable.dispose();
+        }
+        disposable = Flowable.intervalRange(0, 410, 0, 1, TimeUnit.SECONDS)
+                .subscribeOn(Schedulers.computation())
+                .map(aLong -> 410 - aLong)
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(aLong -> timeView.setText(String.valueOf(aLong)))
+                .subscribe();
+    }
+
     private void initBtn() {
-        findViewById(R.id.reset).setOnClickListener(v -> warGameView.reset());
+        timeView = findViewById(R.id.time);
+        timeout();
+        findViewById(R.id.reset).setOnClickListener(v -> {
+            warGameView.reset();
+            timeout();
+        });
+        findViewById(R.id.speed).setOnClickListener(v -> warGameView.addSpeed(userDanMu, 30));
         warGameView.setOnUpdateGameInfoListener((gameInfos, captureInfoMap) -> {
             Collections.sort(gameInfos, (o1, o2) -> {
                 if (o1.terrNum > o2.terrNum) return -1;
@@ -119,6 +145,7 @@ public class RoomActivity extends FragmentActivity {
     private void handleDanMu(UserDanMu userDanMu) {
         for (int i = 1; i < WarGameView.nationName.length; i++) {
             if (userDanMu.danMu.equals(WarGameView.nationName[i])) {
+                this.userDanMu = userDanMu;
                 warGameView.addWarrior(i, userDanMu);
                 return;
             }
@@ -145,11 +172,13 @@ public class RoomActivity extends FragmentActivity {
         warGameView.randomBuff(userDanMu);
     }
 
+    private UserDanMu userDanMu;
+
     private void handleCombo(UserDanMu userDanMu) {
         if (userDanMu.giftId == 1) {//辣条
-            warGameView.addSpeed(userDanMu, 1f);
+            warGameView.addSpeed(userDanMu, 0.5f);
         } else if (userDanMu.giftId == 31036) {//小花花
-            warGameView.addSpeed(userDanMu, 5);
+            warGameView.addSpeed(userDanMu, 3);
         } else if (userDanMu.giftId == 31037) {//打call
             warGameView.addHelper(userDanMu);
         } else if (userDanMu.giftId == 31039) {//牛哇

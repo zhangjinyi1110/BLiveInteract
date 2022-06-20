@@ -130,6 +130,12 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
 
     public void reset() {
         isDraw = false;
+        try {
+            Thread.sleep(11);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        maxTime = 0;
         init();
         initTerritory();
         isDraw = true;
@@ -291,6 +297,8 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
             attack(warriors);
         }
     }
+
+    long maxTime = 0;
 
     /**
      * 进攻
@@ -511,9 +519,12 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     public void run() {
         while (isDraw) {
             try {
+                long start = System.currentTimeMillis();
                 calculate();
                 updateData();
                 drawUI();
+                long time = System.currentTimeMillis() - start;
+                Log.e("TAG", "calculate: time = " + time + "/" + (maxTime = Math.max(maxTime, time)));
                 Thread.sleep(10);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -654,7 +665,7 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
                         addHelper(w);
                         return;
                     } else {
-                        addSpeed(w, 1f);
+                        addSpeed(w, 0.5f);
                     }
                 }
             }

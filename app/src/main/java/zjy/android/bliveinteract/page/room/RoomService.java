@@ -304,15 +304,15 @@ public class RoomService extends Service {
         private final Map<Long, String> imgMap = new HashMap<>();
 
         private void interactWord(Map<String, Object> data) {
-            long uid = (long) ((double) data.get("uid"));
-            RetrofitHelper.createUserApi()
-                    .userInfo(uid)
-                    .retry()
-                    .filter(userInfo -> userInfo.code == 200)
-                    .map(userInfo -> userInfo.data)
-                    .doOnNext(dataDTO -> imgMap.put(dataDTO.uid, dataDTO.avatar))
-                    .doOnNext(dataDTO -> Glide.with(App.getApp()).load(dataDTO.avatar).submit())
-                    .subscribe();
+//            long uid = (long) ((double) data.get("uid"));
+//            RetrofitHelper.createUserApi()
+//                    .userInfo(uid)
+//                    .retry()
+//                    .filter(userInfo -> userInfo.code == 200)
+//                    .map(userInfo -> userInfo.data)
+//                    .doOnNext(dataDTO -> imgMap.put(dataDTO.uid, dataDTO.avatar))
+//                    .doOnNext(dataDTO -> Glide.with(App.getApp()).load(dataDTO.avatar).submit())
+//                    .subscribe();
         }
 
         @SuppressWarnings("unchecked")
