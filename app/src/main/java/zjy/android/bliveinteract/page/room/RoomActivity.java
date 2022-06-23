@@ -33,6 +33,7 @@ import zjy.android.bliveinteract.model.CaptureInfo;
 import zjy.android.bliveinteract.model.UserDanMu;
 import zjy.android.bliveinteract.utils.ToastUtils;
 import zjy.android.bliveinteract.widget.CaptureRankingView;
+import zjy.android.bliveinteract.widget.GameView;
 import zjy.android.bliveinteract.widget.RankingListView;
 import zjy.android.bliveinteract.widget.WarGameView;
 
@@ -70,7 +71,7 @@ public class RoomActivity extends FragmentActivity {
 
     private long roomId;
 
-    private WarGameView warGameView;
+    private GameView warGameView;
 
     private RankingListView rankingListView;
 
@@ -108,27 +109,27 @@ public class RoomActivity extends FragmentActivity {
         timeView = findViewById(R.id.time);
         timeout();
         findViewById(R.id.reset).setOnClickListener(v -> {
-            warGameView.reset();
+//            warGameView.reset();
             timeout();
         });
-        findViewById(R.id.speed).setOnClickListener(v -> warGameView.addSpeed(userDanMu, 30));
-        warGameView.setOnUpdateGameInfoListener((gameInfos, captureInfoMap) -> {
-            Collections.sort(gameInfos, (o1, o2) -> {
-                if (o1.terrNum > o2.terrNum) return -1;
-                else if (o1.terrNum < o2.terrNum) return 1;
-                else if (o1.warriorNum > o2.warriorNum) return -1;
-                else if (o1.warriorNum < o2.warriorNum) return 1;
-                else if (o1.capitalNum > o2.capitalNum) return -1;
-                else if (o1.capitalNum < o2.capitalNum) return 1;
-                else if (o1.nation < o2.nation) return -1;
-                else if (o1.nation > o2.nation) return 1;
-                return 0;
-            });
-            List<CaptureInfo> captureInfoList = new ArrayList<>(captureInfoMap.values());
-            Collections.sort(captureInfoList, (o1, o2) -> o2.captureCount - o1.captureCount);
-            rankingListView.setGameInfoList(gameInfos);
-            captureRankingView.setCaptureInfos(captureInfoList);
-        });
+//        findViewById(R.id.speed).setOnClickListener(v -> warGameView.addSpeed(userDanMu, 30));
+//        warGameView.setOnUpdateGameInfoListener((gameInfos, captureInfoMap) -> {
+//            Collections.sort(gameInfos, (o1, o2) -> {
+//                if (o1.terrNum > o2.terrNum) return -1;
+//                else if (o1.terrNum < o2.terrNum) return 1;
+//                else if (o1.warriorNum > o2.warriorNum) return -1;
+//                else if (o1.warriorNum < o2.warriorNum) return 1;
+//                else if (o1.capitalNum > o2.capitalNum) return -1;
+//                else if (o1.capitalNum < o2.capitalNum) return 1;
+//                else if (o1.nation < o2.nation) return -1;
+//                else if (o1.nation > o2.nation) return 1;
+//                return 0;
+//            });
+//            List<CaptureInfo> captureInfoList = new ArrayList<>(captureInfoMap.values());
+//            Collections.sort(captureInfoList, (o1, o2) -> o2.captureCount - o1.captureCount);
+//            rankingListView.setGameInfoList(gameInfos);
+//            captureRankingView.setCaptureInfos(captureInfoList);
+//        });
     }
 
     @Override
@@ -143,7 +144,7 @@ public class RoomActivity extends FragmentActivity {
     }
 
     private void handleDanMu(UserDanMu userDanMu) {
-        for (int i = 1; i < WarGameView.nationName.length; i++) {
+        for (int i = 0; i < GameView.groupNames.length; i++) {
             if (userDanMu.danMu.equals(WarGameView.nationName[i])) {
                 this.userDanMu = userDanMu;
                 warGameView.addWarrior(i, userDanMu);
@@ -152,8 +153,8 @@ public class RoomActivity extends FragmentActivity {
         }
         if (userDanMu.danMu.startsWith("投靠 ") && userDanMu.danMu.length() == 4) {
             String name = userDanMu.danMu.substring(3);
-            for (int i = 1; i < WarGameView.nationName.length; i++) {
-                if (name.equals(WarGameView.nationName[i])) {
+            for (int i = 0; i < GameView.groupNames.length; i++) {
+                if (name.equals(GameView.groupNames[i])) {
                     warGameView.changeNation(i, userDanMu);
                     return;
                 }

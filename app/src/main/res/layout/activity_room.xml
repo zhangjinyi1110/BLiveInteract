@@ -6,7 +6,14 @@
     android:layout_height="match_parent"
     android:background="@color/teal_700">
 
-    <zjy.android.bliveinteract.widget.WarGameView
+<!--    <zjy.android.bliveinteract.widget.WarGameView-->
+<!--        android:id="@+id/war_game"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="match_parent"-->
+<!--        app:layout_constraintLeft_toLeftOf="parent"-->
+<!--        app:layout_constraintRight_toRightOf="parent" />-->
+
+    <zjy.android.bliveinteract.widget.GameView
         android:id="@+id/war_game"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
