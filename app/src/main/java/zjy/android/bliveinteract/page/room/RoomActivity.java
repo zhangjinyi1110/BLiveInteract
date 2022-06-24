@@ -108,11 +108,14 @@ public class RoomActivity extends FragmentActivity {
     private void initBtn() {
         timeView = findViewById(R.id.time);
         timeout();
+        UserDanMu userDanMu = new UserDanMu(1, "aaa", "红", "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
+                ".jpg");
         findViewById(R.id.reset).setOnClickListener(v -> {
 //            warGameView.reset();
+            warGameView.addWarrior(0, userDanMu);
             timeout();
         });
-//        findViewById(R.id.speed).setOnClickListener(v -> warGameView.addSpeed(userDanMu, 30));
+        findViewById(R.id.speed).setOnClickListener(v -> warGameView.addSpeed(userDanMu, 30));
 //        warGameView.setOnUpdateGameInfoListener((gameInfos, captureInfoMap) -> {
 //            Collections.sort(gameInfos, (o1, o2) -> {
 //                if (o1.terrNum > o2.terrNum) return -1;
@@ -144,8 +147,9 @@ public class RoomActivity extends FragmentActivity {
     }
 
     private void handleDanMu(UserDanMu userDanMu) {
+//        if (true) return;
         for (int i = 0; i < GameView.groupNames.length; i++) {
-            if (userDanMu.danMu.equals(WarGameView.nationName[i])) {
+            if (userDanMu.danMu.equals(GameView.groupNames[i])) {
                 this.userDanMu = userDanMu;
                 warGameView.addWarrior(i, userDanMu);
                 return;

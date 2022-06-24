@@ -26,6 +26,7 @@ import zjy.android.bliveinteract.R;
 import zjy.android.bliveinteract.model.Territory;
 import zjy.android.bliveinteract.model.UserDanMu;
 import zjy.android.bliveinteract.model.Warrior;
+import zjy.android.bliveinteract.utils.CollisionUtils;
 
 public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
 
@@ -54,7 +55,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private final int[][] capitalPoint = new int[][]{{12, 5}, {30, 5}, {12, 37}, {30, 37}, {21,
             21}, {4, 21}, {38, 21}};
 
-    private final long UPDATE_TIME = 30;
+    private static final long UPDATE_TIME = 1000 / 30;
 
     public GameView(Context context) {
         super(context);
@@ -76,6 +77,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         holder.addCallback(this);
 
         mapPaint = new Paint();
+        mapPaint.setStyle(Paint.Style.STROKE);
+        mapPaint.setColor(Color.BLACK);
 
         rolePaint = new Paint();
 
@@ -171,7 +174,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 long dr = System.currentTimeMillis() - start - c - dm;
                 long now = System.currentTimeMillis();
                 long time = now - start;
-                Log.e(TAG, "run: time = " + time + "/c = " + c + "/dm = " + dm + "/dr = " + dr);
+                Log.e(TAG, "run: time = " + time + "/c = " + c + "/dm = " + dm);
                 if (time < UPDATE_TIME) {
                     Thread.sleep(UPDATE_TIME - time);
                 }
@@ -189,62 +192,74 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             advance(w);
         }
 
-        attack(warriors);
+//        attack(warriors);
+        for (Warrior w : warriors) {
+            attack(w);
+        }
     }
 
-    private void attack(List<Warrior> warriors) {
-        for (Territory[] lineTerr : territories) {
-            for (Territory terr : lineTerr) {
-                terr.attacked = false;
-                for (Warrior warrior : warriors) {
-                    if (warrior.getNation() == terr.nation) continue;
-//                    if (warrior.isAttacked()) continue;
-                    if (checkSuccess(terr, warrior, true)) {
-                        if (checkWarrior(terr, warrior.getNation())) {
+    private void attack(Warrior warrior) {
+        edgeCorrect(warrior);
+        float fx = warrior.getX();
+        float fy = warrior.getY();
+        float r = warrior.getRadius();
+        int minL = Math.max((int) ((fx - r) / terrSize), 0);
+        int maxL = Math.min((int) ((fx + r) / terrSize), rowCount - 1);
+        int minR = Math.max((int) ((fy - r) / terrSize), 0);
+        int maxR = Math.min((int) ((fy + r) / terrSize), lineCount - 1);
+//        Log.e(TAG, "attack: " + minR + "/" + maxR + "/" + minL + "/" + maxL);
+        for (int i = minL; i <= maxL; i++) {
+            for (int j = minR; j <= maxR; j++) {
+                Territory territory = territories[i][j];
+                if (territory.nation == warrior.getNation()) continue;
+                int collisionType = CollisionUtils.shouldCollision(territory, warrior);
+                if (collisionType > 0) {
+                    for (Warrior w : warriors) {
+                        if (w.getNation() == warrior.getNation()) continue;
+                        int type = CollisionUtils.shouldCollision(territory, w);
+                        if (type > 0) {
+                            updateAngle(type, warrior);
                             advance(warrior);
-                            continue;
+                            return;
                         }
-//                        if (terr.attacked) continue;
-                        if (terr.isCapital) {
-                            if (--terr.hp == 0) {
-                                terr.isCapital = false;
-                                int oldNation = terr.nation;
-                                int newNation = warrior.getNation();
-                                terr.nation = newNation;
-                                for (Warrior w : warriors) {
-                                    if (w.getNation() == oldNation) {
-                                        w.setNation(newNation);
-                                    }
-                                }
-                            }
-                        } else {
-                            terr.nation = warrior.getNation();
-                            warrior.capture();
-                        }
-                    } else {
-                        checkBorder(warrior);
                     }
+                    updateAngle(collisionType, warrior);
+                    territory.nation = warrior.getNation();
                 }
             }
         }
     }
 
-    private boolean checkWarrior(Territory terr, int nation) {
-        for (Warrior entry : warriors) {
-            if (entry.getNation() == nation) continue;
-            if (checkSuccess(terr, entry, false)) {
-                return true;
-            }
+    private void updateAngle(int collisionType, Warrior warrior) {
+        switch (collisionType) {
+            case 1:
+                warrior.updateAngle(180, 270);
+                break;
+            case 2:
+                warrior.updateAngle(1);
+                break;
+            case 3:
+                warrior.updateAngle(270, 360);
+                break;
+            case 4:
+                warrior.updateAngle(2);
+                break;
+            case 6:
+                warrior.updateAngle(0);
+                break;
+            case 7:
+                warrior.updateAngle(90, 180);
+                break;
+            case 8:
+                warrior.updateAngle(3);
+                break;
+            case 9:
+                warrior.updateAngle(0, 90);
+                break;
         }
-        return false;
     }
 
-    /**
-     * 检测是否到达边界
-     *
-     * @param warrior 战士
-     */
-    private void checkBorder(Warrior warrior) {
+    private void edgeCorrect(Warrior warrior) {
         float left = warrior.getX() - warrior.getRadius();
         float right = warrior.getX() + warrior.getRadius();
         float top = warrior.getY() - warrior.getRadius();
@@ -264,119 +279,6 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         }
     }
 
-
-    /**
-     * 检测是否碰撞
-     *
-     * @param terr    领土块
-     * @param warrior 战士
-     * @return true or false
-     */
-    private boolean checkSuccess(Territory terr, Warrior warrior, boolean update) {
-        float tx = terr.rectF.centerX();
-        float ty = terr.rectF.centerY();
-        float wx = warrior.getX();
-        float wy = warrior.getY();
-        float k = (wy - ty) / (wx - tx);
-        float b = ty - k * tx;
-        float r = warrior.getRadius() * warrior.getRadius();
-        float tSize = terr.rectF.height() / 2;
-
-        float topY = ty - tSize;
-        float topX = (topY - b) / k;
-        if (topX >= tx - tSize && topX <= tx + tSize) {
-            float topL = (wx - topX) * (wx - topX) + (wy - topY) * (wy - topY);
-            if (topL <= r) {
-                if (update) {
-                    float wby = wy + warrior.getRadius();
-                    if (wx <= tx + tSize && wx >= tx - tSize && wby <= ty + tSize && wby >= ty - tSize) {
-//                        Log.e("TAG", "checkSuccess: in square bottom");
-                        warrior.updateAngle(3);
-                    } else {
-//                        Log.e("TAG", "checkSuccess: not in square bottom");
-                        if (tx > wx) {
-                            warrior.updateAngle(0, 90);
-                        } else {
-                            warrior.updateAngle(90, 180);
-                        }
-                    }
-                }
-                return true;
-            }
-        }
-
-        float bottomY = ty + tSize;
-        float bottomX = (bottomY - b) / k;
-        if (bottomX >= tx - tSize && bottomX <= tx + tSize) {
-            float bottomL = (wx - bottomX) * (wx - bottomX) + (wy - bottomY) * (wy - bottomY);
-            if (bottomL <= r) {
-                if (update) {
-                    float wby = wy - warrior.getRadius();
-                    if (wx <= tx + tSize && wx >= tx - tSize && wby <= ty + tSize && wby >= ty - tSize) {
-//                        Log.e("TAG", "checkSuccess: in square top");
-                        warrior.updateAngle(1);
-                    } else {
-//                        Log.e("TAG", "checkSuccess: not in square top");
-                        if (tx > wx) {
-                            warrior.updateAngle(270, 360);
-                        } else {
-                            warrior.updateAngle(180, 270);
-                        }
-                    }
-                }
-                return true;
-            }
-        }
-
-        float leftX = tx - tSize;
-        float leftY = leftX * k + b;
-        if (leftY >= ty - tSize && leftY <= ty + tSize) {
-            float leftL = (wx - leftX) * (wx - leftX) + (wy - leftY) * (wy - leftY);
-            if (leftL <= r) {
-                if (update) {
-                    float wbx = wx + warrior.getRadius();
-                    if (wbx <= tx + tSize && wbx >= tx - tSize && wy <= ty + tSize && wy >= ty - tSize) {
-//                        Log.e("TAG", "checkSuccess: in square right");
-                        warrior.updateAngle(2);
-                    } else {
-//                        Log.e("TAG", "checkSuccess: not in square right");
-                        if (ty > wy) {
-                            warrior.updateAngle(0, 90);
-                        } else {
-                            warrior.updateAngle(270, 360);
-                        }
-                    }
-                }
-                return true;
-            }
-        }
-
-        float rightX = tx + tSize;
-        float rightY = rightX * k + b;
-        if (rightY >= ty - tSize && rightY <= ty + tSize) {
-            float rightL = (wx - rightX) * (wx - rightX) + (wy - rightY) * (wy - rightY);
-            if (rightL <= r) {
-                if (update) {
-                    float wbx = wx + warrior.getRadius();
-                    if (wbx <= tx + tSize && wbx >= tx - tSize && wy <= ty + tSize && wy >= ty - tSize) {
-//                        Log.e("TAG", "checkSuccess: in square left");
-                        warrior.updateAngle(0);
-                    } else {
-//                        Log.e("TAG", "checkSuccess: not in square left");
-                        if (ty > wy) {
-                            warrior.updateAngle(90, 180);
-                        } else {
-                            warrior.updateAngle(180, 270);
-                        }
-                    }
-                }
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private void advance(Warrior warrior) {
         double xSpeed = warrior.getXSpeed();
         double ySpeed = warrior.getYSpeed();
@@ -389,7 +291,10 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         canvas.drawColor(Color.WHITE);
         for (Territory[] array : territories) {
             for (Territory territory : array) {
-                if (territory.nation == -1) continue;
+                if (territory.nation == -1) {
+                    canvas.drawRect(territory.rectF, mapPaint);
+                    continue;
+                }
                 groupImageSrc.set((int) territory.rectF.left, (int) territory.rectF.top,
                         (int) territory.rectF.right, (int) territory.rectF.bottom);
                 groupImageDst.set(territory.rectF.left, territory.rectF.top,
@@ -428,11 +333,6 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     public void addWarrior(int nation, UserDanMu userDanMu) {
         Territory territory = capitals[nation];
         if (territory != null && territory.isCapital) {
-//            List<Warrior> list = warriorMap.get(nation);
-//            if (list == null) {
-//                list = new ArrayList<>();
-//                warriorMap.put(nation, list);
-//            }
             for (Warrior w : warriors) {
                 if (w.getUserDanMu().userid == userDanMu.userid) {
                     return;
