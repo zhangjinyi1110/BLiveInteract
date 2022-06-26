@@ -33,6 +33,7 @@ import okio.ByteString;
 import zjy.android.bliveinteract.App;
 import zjy.android.bliveinteract.contract.MainContract;
 import zjy.android.bliveinteract.contract.RoomContract;
+import zjy.android.bliveinteract.manager.BitmapManager;
 import zjy.android.bliveinteract.model.UserDanMu;
 import zjy.android.bliveinteract.network.RetrofitHelper;
 import zjy.android.bliveinteract.utils.ZLibUtils;
@@ -242,10 +243,13 @@ public class RoomService extends Service {
                         resolveData(MESSAGE.readByteArray(total - headLen));
                     } else if (pVersion <= 1) {
                         MESSAGE.readByteArray(total - headLen);
+                    } else {
+                        MESSAGE.readByteArray(total - headLen);
+                        Log.e(TAG, "onRead: opcode = 5, pVersion = " + pVersion);
                     }
                 } else if (opcode == 3) {
                     MESSAGE.readByteArray(total - headLen);
-                    Log.e(TAG, "onRead: 人气值：" + MESSAGE.readInt());
+//                    Log.e(TAG, "onRead: 人气值：" + MESSAGE.readInt());
                 } else {
                     MESSAGE.readByteArray(total - headLen);
                 }
@@ -301,7 +305,7 @@ public class RoomService extends Service {
             }
         }
 
-        private final Map<Long, String> imgMap = new HashMap<>();
+//        private final Map<Long, String> imgMap = new HashMap<>();
 
         private void interactWord(Map<String, Object> data) {
 //            long uid = (long) ((double) data.get("uid"));
@@ -321,8 +325,8 @@ public class RoomService extends Service {
             List<Object> user = (List<Object>) info.get(2);
             long userid = (long) ((double) user.get(0));
             String username = (String) user.get(1);
-            UserDanMu userDanMu = new UserDanMu(userid, username, danMu, imgMap.get(userid));
-            if (imgMap.containsKey(userid)) {
+            UserDanMu userDanMu = new UserDanMu(userid, username, danMu);
+            if (BitmapManager.checkUser(userid)) {
                 if (handler != null) {
                     Message message = Message.obtain();
                     message.obj = userDanMu;
@@ -332,12 +336,12 @@ public class RoomService extends Service {
             } else {
                 RetrofitHelper.createUserApi()
                         .userInfo(userid)
-                        .retry()
+                        .subscribeOn(Schedulers.newThread())
                         .filter(userInfo -> userInfo.code == 200)
                         .map(userInfo -> userInfo.data)
-                        .doOnNext(dataDTO -> imgMap.put(dataDTO.uid, dataDTO.avatar))
-                        .doOnNext(dataDTO -> Glide.with(App.getApp()).asBitmap().load(dataDTO.avatar).submit())
-                        .doOnNext(dataDTO -> userDanMu.img = dataDTO.avatar)
+//                        .doOnNext(dataDTO -> imgMap.put(dataDTO.uid, dataDTO.avatar))
+                        .doOnNext(dataDTO -> BitmapManager.cacheBitmap(dataDTO.uid, dataDTO.avatar))
+//                        .doOnNext(dataDTO -> userDanMu.img = dataDTO.avatar)
                         .doOnComplete(() -> {
                             if (handler != null) {
                                 Message message = Message.obtain();
@@ -346,6 +350,7 @@ public class RoomService extends Service {
                                 handler.sendMessage(message);
                             }
                         })
+                        .retry()
                         .subscribe();
             }
         }

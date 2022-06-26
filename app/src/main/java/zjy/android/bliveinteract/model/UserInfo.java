@@ -17,8 +17,8 @@ public class UserInfo {
         public int level;
         @SerializedName("sex")
         public String sex;
-        @SerializedName("description")
-        public String description;
+//        @SerializedName("description")
+//        public String description;
         @SerializedName("avatar")
         public String avatar;
     }

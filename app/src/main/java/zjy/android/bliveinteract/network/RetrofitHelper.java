@@ -27,6 +27,7 @@ public class RetrofitHelper {
     public static Api createUserApi() {
         return new Retrofit.Builder()
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(NewGsonConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .baseUrl("https://tenapi.cn/")
                 .client(client())

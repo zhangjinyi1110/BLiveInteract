@@ -19,10 +19,12 @@ public class Warrior {
     private final UserDanMu userDanMu;
     private int captureCount;
 
+    public static final float RADIUS = 25;
+
     public Warrior(Territory territory, UserDanMu userDanMu) {
         this.userDanMu = userDanMu;
-        this.speed = 3;
-        this.radius = 25;
+        this.speed = 5;
+        this.radius = RADIUS;
         this.nation = territory.nation;
         this.currPoint = new PointF(territory.rectF.centerX(), territory.rectF.centerY());
         int angle;
