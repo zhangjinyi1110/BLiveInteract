@@ -147,14 +147,14 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
                     break;
                 case GameMessage.TYPE_GROUP_RANDOM_BUFF:
                     paint = skillPaint;
-                    text = GameView.groupNames[message.nation] + "方发动被动技能（随机buff）";
+                    text = GameView.groupNames[message.nation] + "方发动被动（随机buff）";
                     break;
                 case GameMessage.TYPE_GROUP_INVALID_ATTACK:
                     paint = skillPaint;
                     if (message.dispose) {
                         text = GameView.groupNames[message.nation] + "方被动技能结束";
                     } else {
-                        text = GameView.groupNames[message.nation] + "方发动被动技能（敌方攻击无效）";
+                        text = GameView.groupNames[message.nation] + "方发动被动（敌方攻击无效）";
                     }
                     break;
                 case GameMessage.TYPE_GROUP_REDUCE_SPEED:
@@ -162,7 +162,7 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
                     if (message.dispose) {
                         text = GameView.groupNames[message.nation] + "方被动技能结束";
                     } else {
-                        text = GameView.groupNames[message.nation] + "方发动被动技能（敌方速度减半）";
+                        text = GameView.groupNames[message.nation] + "方发动被动（随机敌方速度减半）";
                     }
                     break;
             }

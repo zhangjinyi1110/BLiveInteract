@@ -329,7 +329,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 case GameMessage.TYPE_GROUP_INVALID_ATTACK:
                     if (gm.dispose) {
                         invalidAttackNation = -1;
-                    } else {
+                    } else if (capitals[gm.nation].isCapital) {
                         invalidAttackNation = gm.nation;
                     }
                     break;
@@ -340,9 +340,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                                 w.setReduceSpeed(0);
                             }
                         }
-                    } else {
+                    } else if (capitals[gm.nation].isCapital) {
                         for (Warrior w : warriors) {
-                            if (w.getNation() != gm.nation) {
+                            if (w.getNation() != gm.nation && random.nextInt() % 5 == 0) {
                                 w.setReduceSpeed(0.5f);
                             }
                         }
