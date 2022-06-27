@@ -165,6 +165,22 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
                         text = GameView.groupNames[message.nation] + "方发动被动（随机敌方速度减半）";
                     }
                     break;
+                case GameMessage.TYPE_GROUP_BIGGER:
+                    paint = skillPaint;
+                    if (message.dispose) {
+                        text = GameView.groupNames[message.nation] + "方被动技能结束";
+                    } else {
+                        text = GameView.groupNames[message.nation] + "方发动被动（己方变大）";
+                    }
+                    break;
+                case GameMessage.TYPE_GROUP_ADD_SPEED_PERCENT:
+                    paint = skillPaint;
+                    if (message.dispose) {
+                        text = GameView.groupNames[message.nation] + "方被动技能结束";
+                    } else {
+                        text = GameView.groupNames[message.nation] + "方发动被动（增加倍速）";
+                    }
+                    break;
             }
             canvas.drawText(text, 0, y, paint);
             y += textH;

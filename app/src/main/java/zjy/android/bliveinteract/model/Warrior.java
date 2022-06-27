@@ -22,11 +22,27 @@ public class Warrior {
     public static final float RADIUS = 25;
 
     private float reduceSpeedPercent = 0;
+    private float addSpeedPercent = 0;
+    private float radiusPercent = 0;
 
     public Warrior(Territory territory, UserDanMu userDanMu) {
         this.userDanMu = userDanMu;
         this.speed = 5;
         this.radius = RADIUS;
+        this.nation = territory.nation;
+        this.currPoint = new PointF(territory.rectF.centerX(), territory.rectF.centerY());
+        int angle;
+        do {
+            angle = random.nextInt(360);
+        } while (angle % 90 == 0);
+        this.angle = angle;
+        updateSpeed();
+    }
+
+    public Warrior(Territory territory, Warrior warrior) {
+        this.userDanMu = warrior.getUserDanMu();
+        this.speed = warrior.speed;
+        this.radius = warrior.radius;
         this.nation = territory.nation;
         this.currPoint = new PointF(territory.rectF.centerX(), territory.rectF.centerY());
         int angle;
@@ -74,16 +90,21 @@ public class Warrior {
         }
     }
 
+    public void addSpeed(float speed) {
+        this.speed += speed;
+        updateSpeed();
+    }
+
     public float getSpeed() {
-        return speed - speed * reduceSpeedPercent;
+        return speed - speed * reduceSpeedPercent + speed * addSpeedPercent;
     }
 
     public double getXSpeed() {
-        return xSpeed - xSpeed * reduceSpeedPercent;
+        return xSpeed - xSpeed * reduceSpeedPercent + xSpeed * addSpeedPercent;
     }
 
     public double getYSpeed() {
-        return ySpeed - ySpeed * reduceSpeedPercent;
+        return ySpeed - ySpeed * reduceSpeedPercent + ySpeed * addSpeedPercent;
     }
 
     public void setSpeed(float speed) {
@@ -101,11 +122,15 @@ public class Warrior {
     }
 
     public float getRadius() {
-        return radius;
+        return radius + radiusPercent * radius;
     }
 
-    public void setRadius(float radius) {
-        this.radius = radius;
+//    public void setRadius(float radius) {
+//        this.radius = radius;
+//    }
+
+    public void addRadius(float radius) {
+        this.radius += radius;
     }
 
     public int getNation() {
@@ -170,7 +195,6 @@ public class Warrior {
             } else {
                 angle = 180 - angle;
             }
-            Log.e("Warrior", "updateAngle: " + nation + "/" + angle + "/" + temp);
             setAngle(angle);
         }
 
@@ -181,11 +205,27 @@ public class Warrior {
         return attacked;
     }
 
-    public void setReduceSpeed(float reduceSpeedPercent) {
+    public void setReduceSpeedPercent(float reduceSpeedPercent) {
         if (reduceSpeedPercent == 0) {
             this.reduceSpeedPercent = 0;
         } else {
             this.reduceSpeedPercent = Math.max(reduceSpeedPercent, this.reduceSpeedPercent);
+        }
+    }
+
+    public void setAddSpeedPercent(float addSpeedPercent) {
+        if (reduceSpeedPercent == 0) {
+            this.addSpeedPercent = 0;
+        } else {
+            this.addSpeedPercent = Math.max(addSpeedPercent, this.addSpeedPercent);
+        }
+    }
+
+    public void setRadiusPercent(float radiusPercent) {
+        if (radiusPercent == 0) {
+            this.radiusPercent = 0;
+        } else {
+            this.radiusPercent = Math.max(radiusPercent, this.radiusPercent);
         }
     }
 }

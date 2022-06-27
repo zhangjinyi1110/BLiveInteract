@@ -2,6 +2,7 @@ package zjy.android.bliveinteract.skill;
 
 import android.util.Log;
 
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -13,14 +14,14 @@ public class RandomTimeTask extends Thread {
 
     private final Random random = new Random();
 
-    private final Skill skill;
+    private final List<Skill> skills;
 
     private boolean isDispose = false;
 
     private Disposable disposable;
 
-    public RandomTimeTask(Skill skill) {
-        this.skill = skill;
+    public RandomTimeTask(List<Skill> skills) {
+        this.skills = skills;
     }
 
     @Override
@@ -41,6 +42,8 @@ public class RandomTimeTask extends Thread {
         if (disposable != null && !disposable.isDisposed()) {
             disposable.dispose();
         }
+        int index = skills.size() == 1 ? 0 : random.nextInt(skills.size());
+        Skill skill = skills.get(index);
         skill.useSkill();
         disposable = Flowable.timer(skill.skillTime(), TimeUnit.MILLISECONDS)
                 .subscribeOn(Schedulers.computation())

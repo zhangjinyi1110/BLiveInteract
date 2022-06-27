@@ -15,6 +15,8 @@ public class GameMessage {
     public static final int TYPE_GROUP_RANDOM_BUFF = 10;
     public static final int TYPE_GROUP_INVALID_ATTACK = 11;
     public static final int TYPE_GROUP_REDUCE_SPEED = 12;
+    public static final int TYPE_GROUP_BIGGER = 13;
+    public static final int TYPE_GROUP_ADD_SPEED_PERCENT = 14;
 
     public int type;
     public int nation;
@@ -116,6 +118,22 @@ public class GameMessage {
     public static GameMessage createGroupReduceSpeed(int nation, boolean dispose) {
         GameMessage gameMessage = new GameMessage();
         gameMessage.type = TYPE_GROUP_REDUCE_SPEED;
+        gameMessage.nation = nation;
+        gameMessage.dispose = dispose;
+        return gameMessage;
+    }
+
+    public static GameMessage createGroupBigger(int nation, boolean dispose) {
+        GameMessage gameMessage = new GameMessage();
+        gameMessage.type = TYPE_GROUP_BIGGER;
+        gameMessage.nation = nation;
+        gameMessage.dispose = dispose;
+        return gameMessage;
+    }
+
+    public static GameMessage createGroupAddSpeedPercent(int nation, boolean dispose) {
+        GameMessage gameMessage = new GameMessage();
+        gameMessage.type = TYPE_GROUP_ADD_SPEED_PERCENT;
         gameMessage.nation = nation;
         gameMessage.dispose = dispose;
         return gameMessage;

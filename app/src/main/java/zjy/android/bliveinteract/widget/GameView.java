@@ -16,10 +16,13 @@ import android.view.SurfaceView;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import io.reactivex.Flowable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -31,10 +34,13 @@ import zjy.android.bliveinteract.model.GameMessage;
 import zjy.android.bliveinteract.model.Territory;
 import zjy.android.bliveinteract.model.UserDanMu;
 import zjy.android.bliveinteract.model.Warrior;
+import zjy.android.bliveinteract.skill.AddSpeedPercentSkill;
+import zjy.android.bliveinteract.skill.BiggerSkill;
 import zjy.android.bliveinteract.skill.InvalidAttackSkill;
 import zjy.android.bliveinteract.skill.RandomBuffSkill;
 import zjy.android.bliveinteract.skill.RandomTimeTask;
 import zjy.android.bliveinteract.skill.ReduceSpeedSkill;
+import zjy.android.bliveinteract.skill.Skill;
 import zjy.android.bliveinteract.utils.CollisionUtils;
 
 public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
@@ -45,7 +51,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private static final int rowCount = 42;
 
     public static final String[] groupNames = new String[]{"绿", "红", "黄", "蓝"};
-    public static final int[] groupImageIds = new int[]{R.drawable.icon_heihuzi, R.drawable.icon_hongfa,
+    public static final int[] groupImageIds = new int[]{R.drawable.icon_heihuzi,
+            R.drawable.icon_hongfa,
             R.drawable.icon_lufei, R.drawable.icon_baji};
 
     private boolean isDrawing = false;
@@ -173,9 +180,14 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     }
 
     private void initSkill() {
-        randomTimeTasks.add(new RandomTimeTask(new InvalidAttackSkill(this, 0)));
-        randomTimeTasks.add(new RandomTimeTask(new ReduceSpeedSkill(this, 1)));
-        randomTimeTasks.add(new RandomTimeTask(new RandomBuffSkill(this, 3)));
+        randomTimeTasks.add(new RandomTimeTask(Collections.singletonList(new InvalidAttackSkill(this, 0))));
+        randomTimeTasks.add(new RandomTimeTask(Collections.singletonList(new ReduceSpeedSkill(this, 1))));
+        List<Skill> skills = new ArrayList<>();
+        skills.add(new AddSpeedPercentSkill(this, 2));
+        skills.add(new BiggerSkill(this, 2));
+        randomTimeTasks.add(new RandomTimeTask(skills));
+        randomTimeTasks.add(new RandomTimeTask(Collections.singletonList(new RandomBuffSkill(this
+                , 3))));
         for (RandomTimeTask task : randomTimeTasks) {
             task.start();
         }
@@ -274,7 +286,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 case GameMessage.TYPE_ALL_ADD_SPEED:
                     initSpeed += gm.speed;
                     for (Warrior w : warriors) {
-                        w.setSpeed(w.getSpeed() + gm.speed);
+                        w.addSpeed(gm.speed);
                     }
                     break;
                 case GameMessage.TYPE_GROUP_ADD_SPEED:
@@ -295,7 +307,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 case GameMessage.TYPE_ADD_RADIUS:
                     for (Warrior w : warriors) {
                         if (w.getUserDanMu().userid == gm.userDanMu.userid) {
-                            w.setRadius(w.getRadius() + gm.radius);
+                            w.addRadius(gm.radius);
                             break;
                         }
                     }
@@ -311,14 +323,16 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     break;
                 case GameMessage.TYPE_GROUP_RANDOM_BUFF:
                     Map<Long, Warrior> map = new HashMap<>();
+                    Set<Long> set = new HashSet<>();
                     for (Warrior w : warriors) {
                         boolean helper = random.nextInt() % 25 == 0;
                         if (w.getNation() == gm.nation) {
                             if (helper && !map.containsKey(w.getUserDanMu().userid)) {
                                 map.put(w.getUserDanMu().userid, w);
-                            } else {
+                            } else if (!set.contains(w.getUserDanMu().userid)) {
                                 float speed = (random.nextInt(5) + 1) / 10f;
-                                addSpeed(w, speed);
+                                addSpeed(w.getUserDanMu(), speed);
+                                set.add(w.getUserDanMu().userid);
                             }
                         }
                     }
@@ -337,13 +351,43 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     if (gm.dispose) {
                         for (Warrior w : warriors) {
                             if (w.getNation() != gm.nation) {
-                                w.setReduceSpeed(0);
+                                w.setReduceSpeedPercent(0);
                             }
                         }
                     } else if (capitals[gm.nation].isCapital) {
                         for (Warrior w : warriors) {
-                            if (w.getNation() != gm.nation && random.nextInt() % 5 == 0) {
-                                w.setReduceSpeed(0.5f);
+                            if (w.getNation() != gm.nation && random.nextInt() % 3 == 0) {
+                                w.setReduceSpeedPercent(0.5f);
+                            }
+                        }
+                    }
+                    break;
+                case GameMessage.TYPE_GROUP_BIGGER:
+                    if (gm.dispose) {
+                        for (Warrior w : warriors) {
+                            if (w.getNation() == gm.nation) {
+                                w.setRadiusPercent(0);
+                            }
+                        }
+                    } else if (capitals[gm.nation].isCapital) {
+                        for (Warrior w : warriors) {
+                            if (w.getNation() == gm.nation) {
+                                w.setRadiusPercent(1);
+                            }
+                        }
+                    }
+                    break;
+                case GameMessage.TYPE_GROUP_ADD_SPEED_PERCENT:
+                    if (gm.dispose) {
+                        for (Warrior w : warriors) {
+                            if (w.getNation() == gm.nation) {
+                                w.setAddSpeedPercent(0);
+                            }
+                        }
+                    } else if (capitals[gm.nation].isCapital) {
+                        for (Warrior w : warriors) {
+                            if (w.getNation() == gm.nation) {
+                                w.setAddSpeedPercent(3);
                             }
                         }
                     }
@@ -520,12 +564,20 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             Bitmap bitmap;
             if (warrior.getRadius() == Warrior.RADIUS) {
                 bitmap = BitmapManager.getBitmap(warrior.getUserDanMu().userid);
+                canvas.drawBitmap(bitmap, l, t, rolePaint);
             } else {
-                bitmap = BitmapManager.getSizeBitmap(warrior.getUserDanMu().userid, warrior.getRadius() * 2);
+                bitmap = BitmapManager.getBitmap(warrior.getUserDanMu().userid);
+                src.set(0, 0, bitmap.getWidth(), bitmap.getHeight());
+                dst.set(l, t, l + warrior.getRadius() * 2, t + warrior.getRadius() * 2);
+                canvas.drawBitmap(bitmap, src, dst, rolePaint);
+//                bitmap = BitmapManager.getSizeBitmap(warrior.getUserDanMu().userid,
+//                        warrior.getRadius() * 2);
             }
-            canvas.drawBitmap(bitmap, l, t, rolePaint);
         }
     }
+
+    private final Rect src = new Rect();
+    private final RectF dst = new RectF();
 
     public void addGameMessage(GameMessage gameMessage) {
         gameMessages.add(gameMessage);
@@ -540,7 +592,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 }
             }
             Warrior warrior = new Warrior(territory, userDanMu);
-            warrior.setSpeed(warrior.getSpeed() + initSpeed);
+            warrior.addSpeed(initSpeed);
             warriors.add(warrior);
         }
     }
@@ -598,13 +650,12 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     }
 
     private void addSpeed(Warrior warrior, float speed) {
-        warrior.setSpeed(warrior.getSpeed() + speed);
+        warrior.addSpeed(speed);
     }
 
     private void addHelper(Warrior warrior) {
         Territory capital = capitals[warrior.getNation()];
-        Warrior helper = new Warrior(capital, warrior.getUserDanMu());
-        helper.setSpeed(warrior.getSpeed());
+        Warrior helper = new Warrior(capital, warrior);
         warriors.add(helper);
     }
 

@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Flowable;
@@ -23,6 +24,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import zjy.android.bliveinteract.R;
 import zjy.android.bliveinteract.contract.MainContract;
+import zjy.android.bliveinteract.manager.BitmapManager;
 import zjy.android.bliveinteract.model.GameMessage;
 import zjy.android.bliveinteract.model.UserDanMu;
 import zjy.android.bliveinteract.model.Warrior;
@@ -102,14 +104,48 @@ public class RoomActivity extends FragmentActivity {
     private void initBtn() {
         timeView = findViewById(R.id.time);
         timeout();
-//        UserDanMu userDanMu = new UserDanMu(1, "aaa", "红", "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
-//                ".jpg");
         findViewById(R.id.reset).setOnClickListener(v -> {
             warGameView.reset();
-//            warGameView.addWarrior(0, userDanMu);
             timeout();
         });
-        findViewById(R.id.speed).setOnClickListener(v -> warGameView.addGameMessage(GameMessage.createAddSpeed(30, userDanMu)));
+        new Thread(() -> {
+
+            try {
+                BitmapManager.cacheBitmap(1, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
+                        ".jpg");
+                BitmapManager.cacheBitmap(2, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
+                        ".jpg");
+                BitmapManager.cacheBitmap(2, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
+                        ".jpg");
+                BitmapManager.cacheBitmap(3, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
+                        ".jpg");
+                BitmapManager.cacheBitmap(4, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
+                        ".jpg");
+                BitmapManager.cacheBitmap(5, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
+                        ".jpg");
+                BitmapManager.cacheBitmap(6, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
+                        ".jpg");
+            } catch (ExecutionException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+        findViewById(R.id.speed).setOnClickListener(v -> {
+            UserDanMu userDanMu = new UserDanMu(1, "aaa", "红");
+            UserDanMu userDanMu1 = new UserDanMu(2, "aaa", "红");
+            UserDanMu userDanMu2 = new UserDanMu(2, "aaa", "红");
+            UserDanMu userDanMu3 = new UserDanMu(3, "aaa", "红");
+            UserDanMu userDanMu4 = new UserDanMu(4, "aaa", "红");
+            UserDanMu userDanMu5 = new UserDanMu(5, "aaa", "红");
+            UserDanMu userDanMu6 = new UserDanMu(6, "aaa", "红");
+            warGameView.addGameMessage(GameMessage.createJoinGroup(0, userDanMu));
+            warGameView.addGameMessage(GameMessage.createJoinGroup(2, userDanMu1));
+            warGameView.addGameMessage(GameMessage.createJoinGroup(1, userDanMu2));
+            warGameView.addGameMessage(GameMessage.createJoinGroup(1, userDanMu3));
+            warGameView.addGameMessage(GameMessage.createJoinGroup(0, userDanMu4));
+            warGameView.addGameMessage(GameMessage.createJoinGroup(0, userDanMu5));
+            warGameView.addGameMessage(GameMessage.createJoinGroup(3, userDanMu6));
+//            warGameView.addGameMessage(GameMessage.createAddSpeed(30, userDanMu1));
+        });
         warGameView.setOnUpdateGameInfoListener((captureInfos) -> {
             Collections.sort(captureInfos, (o1, o2) -> o2.captureCount - o1.captureCount);
             captureRankingView.setCaptureInfos(captureInfos);
@@ -133,7 +169,6 @@ public class RoomActivity extends FragmentActivity {
         for (int i = 0; i < GameView.groupNames.length; i++) {
             if (userDanMu.danMu.equals(GameView.groupNames[i])) {
                 this.userDanMu = userDanMu;
-//                warGameView.addWarrior(i, userDanMu);
                 warGameView.addGameMessage(GameMessage.createJoinGroup(i, userDanMu));
                 return;
             }
@@ -142,7 +177,6 @@ public class RoomActivity extends FragmentActivity {
             String name = userDanMu.danMu.substring(2);
             for (int i = 0; i < GameView.groupNames.length; i++) {
                 if (name.equals(GameView.groupNames[i])) {
-//                    warGameView.changeNation(i, userDanMu);
                     warGameView.addGameMessage(GameMessage.createChangeGroup(i, userDanMu));
                     return;
                 }
@@ -156,10 +190,8 @@ public class RoomActivity extends FragmentActivity {
             case "tP":
             case "tp":
                 warGameView.addGameMessage(GameMessage.createGoCapital(userDanMu));
-//                warGameView.goCapital(userDanMu);
                 return;
         }
-//        warGameView.randomBuff(userDanMu);
         warGameView.addGameMessage(GameMessage.createRandomBuff(userDanMu));
     }
 
@@ -167,13 +199,10 @@ public class RoomActivity extends FragmentActivity {
 
     private void handleCombo(UserDanMu userDanMu) {
         if (userDanMu.giftId == 1) {//辣条
-//            warGameView.addSpeed(userDanMu, 2f);
             warGameView.addGameMessage(GameMessage.createAddSpeed(0.5f, userDanMu));
         } else if (userDanMu.giftId == 31036) {//小花花
-//            warGameView.addSpeed(userDanMu, 4);
             warGameView.addGameMessage(GameMessage.createAddSpeed(1f, userDanMu));
         } else if (userDanMu.giftId == 31037) {//打call
-//            warGameView.addHelper(userDanMu);
             warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
         } else if (userDanMu.giftId == 31039) {//牛哇
 
