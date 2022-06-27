@@ -12,12 +12,16 @@ public class GameMessage {
     public static final int TYPE_GROUP_ADD_SPEED = 7;
     public static final int TYPE_ADD_RADIUS = 8;
     public static final int TYPE_REMOVE_GROUP = 9;
+    public static final int TYPE_GROUP_RANDOM_BUFF = 10;
+    public static final int TYPE_GROUP_INVALID_ATTACK = 11;
+    public static final int TYPE_GROUP_REDUCE_SPEED = 12;
 
     public int type;
     public int nation;
     public UserDanMu userDanMu;
     public float speed;
     public float radius;
+    public boolean dispose;
 
     public static GameMessage createJoinGroup(int nation, UserDanMu userDanMu) {
         GameMessage gameMessage = new GameMessage();
@@ -91,6 +95,29 @@ public class GameMessage {
         GameMessage gameMessage = new GameMessage();
         gameMessage.type = TYPE_REMOVE_GROUP;
         gameMessage.nation = nation;
+        return gameMessage;
+    }
+
+    public static GameMessage createGroupRandomBuff(int nation) {
+        GameMessage gameMessage = new GameMessage();
+        gameMessage.type = TYPE_GROUP_RANDOM_BUFF;
+        gameMessage.nation = nation;
+        return gameMessage;
+    }
+
+    public static GameMessage createGroupInvalidAttack(int nation, boolean dispose) {
+        GameMessage gameMessage = new GameMessage();
+        gameMessage.type = TYPE_GROUP_INVALID_ATTACK;
+        gameMessage.nation = nation;
+        gameMessage.dispose = dispose;
+        return gameMessage;
+    }
+
+    public static GameMessage createGroupReduceSpeed(int nation, boolean dispose) {
+        GameMessage gameMessage = new GameMessage();
+        gameMessage.type = TYPE_GROUP_REDUCE_SPEED;
+        gameMessage.nation = nation;
+        gameMessage.dispose = dispose;
         return gameMessage;
     }
 

@@ -19,7 +19,7 @@ import zjy.android.bliveinteract.model.GameMessage;
 public class RankingListView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
 
     private boolean isDrawing;
-    private Paint textPaint;
+    private Paint normalPaint, buffPaint, skillPaint, defeatPaint;
     private SurfaceHolder holder;
     private final List<GameMessage> gameMessages = new ArrayList<>();
 
@@ -44,11 +44,23 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
         holder = getHolder();
         holder.addCallback(this);
 
-        textPaint = new Paint();
-        textPaint.setColor(Color.BLACK);
-        textPaint.setTextSize(38);
+        normalPaint = new Paint();
+        normalPaint.setColor(Color.GRAY);
+        normalPaint.setTextSize(38);
 
-        Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
+        skillPaint = new Paint();
+        skillPaint.setColor(Color.RED);
+        skillPaint.setTextSize(38);
+
+        buffPaint = new Paint();
+        buffPaint.setColor(Color.BLACK);
+        buffPaint.setTextSize(38);
+
+        defeatPaint = new Paint();
+        defeatPaint.setColor(Color.BLUE);
+        defeatPaint.setTextSize(38);
+
+        Paint.FontMetrics fontMetrics = normalPaint.getFontMetrics();
         textY = (fontMetrics.bottom - fontMetrics.ascent) / 2 - fontMetrics.bottom;
         textH = fontMetrics.bottom - fontMetrics.ascent;
     }
@@ -89,6 +101,7 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
         float y = textH - textY;
         int size = gameMessages.size();
         for (int i = 0; i < size; i++) {
+            Paint paint = normalPaint;
             GameMessage message = gameMessages.get(i);
             String text = "";
             if (message.userDanMu != null) {
@@ -99,6 +112,7 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
                     text += "加入了" + GameView.groupNames[message.nation] + "方";
                     break;
                 case GameMessage.TYPE_ADD_SPEED:
+                    paint = buffPaint;
                     text += "获得了加速";
                     break;
                 case GameMessage.TYPE_CHANGE_GROUP:
@@ -108,25 +122,51 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
                     text += "回城";
                     break;
                 case GameMessage.TYPE_ADD_HELPER:
+                    paint = buffPaint;
                     text += "增加了分身";
                     break;
                 case GameMessage.TYPE_RANDOM_BUFF:
+                    paint = buffPaint;
                     text += "获得了随机buff";
                     break;
                 case GameMessage.TYPE_ALL_ADD_SPEED:
+                    paint = buffPaint;
                     text = "全体增加速度";
                     break;
                 case GameMessage.TYPE_ADD_RADIUS:
+                    paint = buffPaint;
                     text += "变大了";
                     break;
                 case GameMessage.TYPE_GROUP_ADD_SPEED:
+                    paint = buffPaint;
                     text = GameView.groupNames[message.nation] + "方阵营加速";
                     break;
                 case GameMessage.TYPE_REMOVE_GROUP:
+                    paint = defeatPaint;
                     text = GameView.groupNames[message.nation] + "方阵营战败";
                     break;
+                case GameMessage.TYPE_GROUP_RANDOM_BUFF:
+                    paint = skillPaint;
+                    text = GameView.groupNames[message.nation] + "方发动被动技能（随机buff）";
+                    break;
+                case GameMessage.TYPE_GROUP_INVALID_ATTACK:
+                    paint = skillPaint;
+                    if (message.dispose) {
+                        text = GameView.groupNames[message.nation] + "方被动技能结束";
+                    } else {
+                        text = GameView.groupNames[message.nation] + "方发动被动技能（敌方攻击无效）";
+                    }
+                    break;
+                case GameMessage.TYPE_GROUP_REDUCE_SPEED:
+                    paint = skillPaint;
+                    if (message.dispose) {
+                        text = GameView.groupNames[message.nation] + "方被动技能结束";
+                    } else {
+                        text = GameView.groupNames[message.nation] + "方发动被动技能（敌方速度减半）";
+                    }
+                    break;
             }
-            canvas.drawText(text, 0, y, textPaint);
+            canvas.drawText(text, 0, y, paint);
             y += textH;
         }
     }

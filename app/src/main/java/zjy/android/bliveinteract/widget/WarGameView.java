@@ -308,7 +308,7 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
     private void attack(List<Warrior> warriors) {
         for (Territory[] lineTerr : mapTerrs) {
             for (Territory terr : lineTerr) {
-                terr.attacked = false;
+//                terr.attacked = false;
                 for (Warrior warrior : warriors) {
                     if (warrior.getNation() == terr.nation) break;
 //                    if (warrior.isAttacked()) continue;

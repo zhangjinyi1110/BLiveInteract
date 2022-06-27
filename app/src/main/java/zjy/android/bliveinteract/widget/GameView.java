@@ -31,6 +31,10 @@ import zjy.android.bliveinteract.model.GameMessage;
 import zjy.android.bliveinteract.model.Territory;
 import zjy.android.bliveinteract.model.UserDanMu;
 import zjy.android.bliveinteract.model.Warrior;
+import zjy.android.bliveinteract.skill.InvalidAttackSkill;
+import zjy.android.bliveinteract.skill.RandomBuffSkill;
+import zjy.android.bliveinteract.skill.RandomTimeTask;
+import zjy.android.bliveinteract.skill.ReduceSpeedSkill;
 import zjy.android.bliveinteract.utils.CollisionUtils;
 
 public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
@@ -64,6 +68,10 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private static final long UPDATE_TIME = 1000 / 30;
 
     private final Random random = new Random();
+
+    private int invalidAttackNation = -1;
+
+    private final List<RandomTimeTask> randomTimeTasks = new ArrayList<>();
 
     private float initSpeed = 0;
 
@@ -150,6 +158,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         isDrawing = true;
         initTerritory();
         new Thread(this).start();
+        initSkill();
     }
 
     @Override
@@ -160,6 +169,23 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
         isDrawing = false;
+        overSkill();
+    }
+
+    private void initSkill() {
+        randomTimeTasks.add(new RandomTimeTask(new InvalidAttackSkill(this, 0)));
+        randomTimeTasks.add(new RandomTimeTask(new ReduceSpeedSkill(this, 1)));
+        randomTimeTasks.add(new RandomTimeTask(new RandomBuffSkill(this, 3)));
+        for (RandomTimeTask task : randomTimeTasks) {
+            task.start();
+        }
+    }
+
+    public void overSkill() {
+        for (RandomTimeTask task : randomTimeTasks) {
+            task.dispose();
+        }
+        randomTimeTasks.clear();
     }
 
     @Override
@@ -283,6 +309,45 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     }
                     warriors.removeAll(remove);
                     break;
+                case GameMessage.TYPE_GROUP_RANDOM_BUFF:
+                    Map<Long, Warrior> map = new HashMap<>();
+                    for (Warrior w : warriors) {
+                        boolean helper = random.nextInt() % 25 == 0;
+                        if (w.getNation() == gm.nation) {
+                            if (helper && !map.containsKey(w.getUserDanMu().userid)) {
+                                map.put(w.getUserDanMu().userid, w);
+                            } else {
+                                float speed = (random.nextInt(5) + 1) / 10f;
+                                addSpeed(w, speed);
+                            }
+                        }
+                    }
+                    for (Warrior w : map.values()) {
+                        addHelper(w);
+                    }
+                    break;
+                case GameMessage.TYPE_GROUP_INVALID_ATTACK:
+                    if (gm.dispose) {
+                        invalidAttackNation = -1;
+                    } else {
+                        invalidAttackNation = gm.nation;
+                    }
+                    break;
+                case GameMessage.TYPE_GROUP_REDUCE_SPEED:
+                    if (gm.dispose) {
+                        for (Warrior w : warriors) {
+                            if (w.getNation() != gm.nation) {
+                                w.setReduceSpeed(0);
+                            }
+                        }
+                    } else {
+                        for (Warrior w : warriors) {
+                            if (w.getNation() != gm.nation) {
+                                w.setReduceSpeed(0.5f);
+                            }
+                        }
+                    }
+                    break;
             }
         }
         if (onGameMessageListener != null) {
@@ -332,6 +397,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 int collisionType = CollisionUtils.shouldCollision(territory, warrior);
                 if (collisionType > 0) {
                     updateAngle(collisionType, warrior);
+                    if (invalidAttackNation != -1 && invalidAttackNation == territory.nation) {
+                        continue;
+                    }
                     if (territory.isCapital) {
                         if (--territory.hp <= 0) {
                             addGameMessage(GameMessage.createRemoveGroup(territory.nation));
@@ -397,16 +465,16 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         float top = warrior.getY() - warrior.getRadius();
         float bottom = warrior.getY() + warrior.getRadius();
         if (top <= 0) {
-            warrior.setCurrPoint(warrior.getX(), warrior.getRadius() + 10);
+            warrior.setCurrPoint(warrior.getX(), warrior.getRadius() + 1);
             warrior.updateAngle(1);
         } else if (bottom >= getHeight()) {
-            warrior.setCurrPoint(warrior.getX(), getHeight() - warrior.getRadius() - 10);
+            warrior.setCurrPoint(warrior.getX(), getHeight() - warrior.getRadius() - 1);
             warrior.updateAngle(3);
         } else if (left <= 0) {
-            warrior.setCurrPoint(warrior.getRadius() + 10, warrior.getY());
+            warrior.setCurrPoint(warrior.getRadius() + 1, warrior.getY());
             warrior.updateAngle(0);
         } else if (right >= getWidth()) {
-            warrior.setCurrPoint(getWidth() - warrior.getRadius() - 10, warrior.getY());
+            warrior.setCurrPoint(getWidth() - warrior.getRadius() - 1, warrior.getY());
             warrior.updateAngle(2);
         }
     }
@@ -553,6 +621,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 //        init();
         warriors.clear();
         initTerritory();
+        initSkill();
         initSpeed = 0;
     }
 

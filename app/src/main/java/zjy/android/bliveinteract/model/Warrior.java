@@ -21,6 +21,8 @@ public class Warrior {
 
     public static final float RADIUS = 25;
 
+    private float reduceSpeedPercent = 0;
+
     public Warrior(Territory territory, UserDanMu userDanMu) {
         this.userDanMu = userDanMu;
         this.speed = 5;
@@ -73,15 +75,15 @@ public class Warrior {
     }
 
     public float getSpeed() {
-        return speed;
+        return speed - speed * reduceSpeedPercent;
     }
 
     public double getXSpeed() {
-        return xSpeed;
+        return xSpeed - xSpeed * reduceSpeedPercent;
     }
 
     public double getYSpeed() {
-        return ySpeed;
+        return ySpeed - ySpeed * reduceSpeedPercent;
     }
 
     public void setSpeed(float speed) {
@@ -177,5 +179,13 @@ public class Warrior {
 
     public boolean isAttacked() {
         return attacked;
+    }
+
+    public void setReduceSpeed(float reduceSpeedPercent) {
+        if (reduceSpeedPercent == 0) {
+            this.reduceSpeedPercent = 0;
+        } else {
+            this.reduceSpeedPercent = Math.max(reduceSpeedPercent, this.reduceSpeedPercent);
+        }
     }
 }
