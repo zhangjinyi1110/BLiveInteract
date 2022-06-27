@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -15,18 +14,16 @@ import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import zjy.android.bliveinteract.model.GameInfo;
+import zjy.android.bliveinteract.model.GameMessage;
 
 public class RankingListView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
 
-    private final int size = WarGameView.nationName.length;
     private boolean isDrawing;
-    private Paint nationNamePaint, textPaint, textPaint3;
-    private final Paint[] bgPaint = new Paint[size];
+    private Paint textPaint;
     private SurfaceHolder holder;
-    private final RectF[] rectFS = new RectF[size];
-    private float itemHeight;
-    private List<GameInfo> gameInfoList = new ArrayList<>();
+    private List<GameMessage> gameMessages = new ArrayList<>();
+
+    private float textY;
 
     public RankingListView(Context context) {
         super(context);
@@ -47,35 +44,16 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
         holder = getHolder();
         holder.addCallback(this);
 
-        nationNamePaint = new Paint();
-        nationNamePaint.setColor(Color.WHITE);
-        nationNamePaint.setTextSize(68);
-
         textPaint = new Paint();
-        textPaint.setColor(Color.WHITE);
+        textPaint.setColor(Color.BLACK);
         textPaint.setTextSize(28);
 
-        textPaint3 = new Paint();
-        textPaint3.setColor(Color.WHITE);
-
-        for (int i = 0; i < size; i++) {
-            rectFS[i] = new RectF();
-            Paint paint = new Paint();
-            paint.setTextSize(78);
-            paint.setColor(Color.parseColor(WarGameView.terrColorStr[i]));
-            bgPaint[i] = paint;
-        }
-        Paint.FontMetrics fontMetrics = bgPaint[0].getFontMetrics();
-        itemHeight = fontMetrics.descent - fontMetrics.ascent;
+        Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
+        textY = (fontMetrics.bottom - fontMetrics.ascent) / 2 - fontMetrics.bottom;
     }
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-        int width = getWidth();
-        float height = 0;
-        for (int i = 1; i < size; i++) {
-            rectFS[i].set(0, height, width, height += itemHeight);
-        }
         isDrawing = true;
         new Thread(this).start();
     }
@@ -107,31 +85,57 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
     }
 
     private void drawList(Canvas canvas) {
-        int i = 1;
-        for (GameInfo info : gameInfoList) {
-            int nation = info.nation;
-            canvas.drawRect(rectFS[i], bgPaint[nation]);
-            Paint.FontMetrics fontMetrics = nationNamePaint.getFontMetrics();
-            float h = (fontMetrics.descent - fontMetrics.ascent) / 2 - fontMetrics.bottom;
-            float top = (i - 1) * itemHeight;
-            float y = top + itemHeight / 2 + h;
-            canvas.drawText(WarGameView.nationName[nation], 0, y, nationNamePaint);
-
-            canvas.drawText("领土：" + info.terrNum, 70, top + 35, textPaint);
-            canvas.drawText("城池：" + info.capitalNum, 250, top + 35, textPaint);
-            canvas.drawText("将军：" + info.userNum, 70, top + 75, textPaint);
-            canvas.drawText("战士：" + info.warriorNum, 250, top + 75, textPaint);
-
-            i++;
+        StringBuilder builder = new StringBuilder();
+        for (int i = gameMessages.size() - 1; i >= 0; i--) {
+            GameMessage message = gameMessages.get(i);
+            if (message.userDanMu != null) {
+                builder.append(message.userDanMu.username);
+            }
+            switch (message.type) {
+                case GameMessage.TYPE_JOIN_GROUP:
+                    builder.append("加入了");
+                    break;
+                case GameMessage.TYPE_ADD_SPEED:
+                    builder.append("获得了加速");
+                    break;
+                case GameMessage.TYPE_CHANGE_GROUP:
+                    builder.append("反水了");
+                    break;
+                case GameMessage.TYPE_GO_CAPITAL:
+                    builder.append("回城");
+                    break;
+                case GameMessage.TYPE_ADD_HELPER:
+                    builder.append("增加了分身");
+                    break;
+                case GameMessage.TYPE_RANDOM_BUFF:
+                    builder.append("获得了随机buff");
+                    break;
+                case GameMessage.TYPE_ALL_ADD_SPEED:
+                    builder.append("全体增加速度");
+                    break;
+            }
+            builder.append('\n');
         }
+        canvas.drawText(builder.toString(), 0, getHeight() - textY, textPaint);
     }
 
-    public void setGameInfoList(List<GameInfo> gameInfoList) {
-        this.gameInfoList = gameInfoList;
+    public void setGameMessages(List<GameMessage> gameMessages) {
+        int size = gameMessages.size();
+        if (size > 0 && this.gameMessages.size() >= 8) {
+            this.gameMessages.subList(0, size).clear();
+        }
+        this.gameMessages.addAll(gameMessages);
+    }
+
+    public void setGameMessages(GameMessage gameMessage) {
+        if (this.gameMessages.size() >= 8) {
+            this.gameMessages.remove(0);
+        }
+        this.gameMessages.add(gameMessage);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), (int) (itemHeight * 7 + 0.5));
+        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), 800);
     }
 }

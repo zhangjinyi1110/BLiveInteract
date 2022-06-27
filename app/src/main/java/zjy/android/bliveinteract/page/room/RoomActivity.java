@@ -13,13 +13,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Flowable;
@@ -27,15 +22,13 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import zjy.android.bliveinteract.R;
-import zjy.android.bliveinteract.adapter.RankingAdapter;
 import zjy.android.bliveinteract.contract.MainContract;
-import zjy.android.bliveinteract.model.CaptureInfo;
+import zjy.android.bliveinteract.model.GameMessage;
 import zjy.android.bliveinteract.model.UserDanMu;
 import zjy.android.bliveinteract.utils.ToastUtils;
 import zjy.android.bliveinteract.widget.CaptureRankingView;
 import zjy.android.bliveinteract.widget.GameView;
 import zjy.android.bliveinteract.widget.RankingListView;
-import zjy.android.bliveinteract.widget.WarGameView;
 
 public class RoomActivity extends FragmentActivity {
 
@@ -108,31 +101,19 @@ public class RoomActivity extends FragmentActivity {
     private void initBtn() {
         timeView = findViewById(R.id.time);
         timeout();
-        UserDanMu userDanMu = new UserDanMu(1, "aaa", "红", "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
-                ".jpg");
+//        UserDanMu userDanMu = new UserDanMu(1, "aaa", "红", "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
+//                ".jpg");
         findViewById(R.id.reset).setOnClickListener(v -> {
-//            warGameView.reset();
-            warGameView.addWarrior(0, userDanMu);
+            warGameView.reset();
+//            warGameView.addWarrior(0, userDanMu);
             timeout();
         });
-        findViewById(R.id.speed).setOnClickListener(v -> warGameView.addSpeed(userDanMu, 30));
-//        warGameView.setOnUpdateGameInfoListener((gameInfos, captureInfoMap) -> {
-//            Collections.sort(gameInfos, (o1, o2) -> {
-//                if (o1.terrNum > o2.terrNum) return -1;
-//                else if (o1.terrNum < o2.terrNum) return 1;
-//                else if (o1.warriorNum > o2.warriorNum) return -1;
-//                else if (o1.warriorNum < o2.warriorNum) return 1;
-//                else if (o1.capitalNum > o2.capitalNum) return -1;
-//                else if (o1.capitalNum < o2.capitalNum) return 1;
-//                else if (o1.nation < o2.nation) return -1;
-//                else if (o1.nation > o2.nation) return 1;
-//                return 0;
-//            });
-//            List<CaptureInfo> captureInfoList = new ArrayList<>(captureInfoMap.values());
-//            Collections.sort(captureInfoList, (o1, o2) -> o2.captureCount - o1.captureCount);
-//            rankingListView.setGameInfoList(gameInfos);
-//            captureRankingView.setCaptureInfos(captureInfoList);
-//        });
+        findViewById(R.id.speed).setOnClickListener(v -> warGameView.addGameMessage(GameMessage.createAddSpeed(30, userDanMu)));
+        warGameView.setOnUpdateGameInfoListener((captureInfos) -> {
+            Collections.sort(captureInfos, (o1, o2) -> o2.captureCount - o1.captureCount);
+            captureRankingView.setCaptureInfos(captureInfos);
+        });
+        warGameView.setOnGameMessageListener((gameMessages -> rankingListView.setGameMessages(gameMessages)));
     }
 
     @Override
@@ -151,15 +132,17 @@ public class RoomActivity extends FragmentActivity {
         for (int i = 0; i < GameView.groupNames.length; i++) {
             if (userDanMu.danMu.equals(GameView.groupNames[i])) {
                 this.userDanMu = userDanMu;
-                warGameView.addWarrior(i, userDanMu);
+//                warGameView.addWarrior(i, userDanMu);
+                warGameView.addGameMessage(GameMessage.createJoinGroup(i, userDanMu));
                 return;
             }
         }
-        if (userDanMu.danMu.startsWith("投靠 ") && userDanMu.danMu.length() == 4) {
-            String name = userDanMu.danMu.substring(3);
+        if (userDanMu.danMu.startsWith("反水") && userDanMu.danMu.length() == 3) {
+            String name = userDanMu.danMu.substring(2);
             for (int i = 0; i < GameView.groupNames.length; i++) {
                 if (name.equals(GameView.groupNames[i])) {
-                    warGameView.changeNation(i, userDanMu);
+//                    warGameView.changeNation(i, userDanMu);
+                    warGameView.addGameMessage(GameMessage.createChangeGroup(i, userDanMu));
                     return;
                 }
             }
@@ -171,24 +154,37 @@ public class RoomActivity extends FragmentActivity {
             case "Tp":
             case "tP":
             case "tp":
-                warGameView.goCapital(userDanMu);
+                warGameView.addGameMessage(GameMessage.createGoCapital(userDanMu));
+//                warGameView.goCapital(userDanMu);
                 return;
         }
-        warGameView.randomBuff(userDanMu);
+//        warGameView.randomBuff(userDanMu);
+        warGameView.addGameMessage(GameMessage.createRandomBuff(userDanMu));
     }
 
     private UserDanMu userDanMu;
 
     private void handleCombo(UserDanMu userDanMu) {
         if (userDanMu.giftId == 1) {//辣条
-            warGameView.addSpeed(userDanMu, 0.5f);
+//            warGameView.addSpeed(userDanMu, 2f);
+            warGameView.addGameMessage(GameMessage.createAddSpeed(1f, userDanMu));
         } else if (userDanMu.giftId == 31036) {//小花花
-            warGameView.addSpeed(userDanMu, 3);
+//            warGameView.addSpeed(userDanMu, 4);
+            warGameView.addGameMessage(GameMessage.createAddSpeed(2f, userDanMu));
         } else if (userDanMu.giftId == 31037) {//打call
-            warGameView.addHelper(userDanMu);
+//            warGameView.addHelper(userDanMu);
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
         } else if (userDanMu.giftId == 31039) {//牛哇
 
         } else if (userDanMu.giftId == 30971) {//这个好诶
+
+        } else if (userDanMu.giftId == 31025) {//泡泡糖
+
+        } else if (userDanMu.giftId == 30896) {//打榜
+
+        } else if (userDanMu.giftId == 30426) {//能量石
+
+        } else if (userDanMu.giftId == 20011) {//金币
 
         }
     }

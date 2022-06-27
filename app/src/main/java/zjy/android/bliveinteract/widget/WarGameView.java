@@ -179,7 +179,7 @@ public class WarGameView extends SurfaceView implements SurfaceHolder.Callback, 
                 int size = (int) (warrior.getRadius() * 2);
                 float l = warrior.getX() - warrior.getRadius();
                 float t = warrior.getY() - warrior.getRadius();
-                canvas.drawBitmap(getImg(warrior.getUserDanMu().img, size), l, t, paint);
+//                canvas.drawBitmap(getImg(warrior.getUserDanMu().img, size), l, t, paint);
             }
         }
     }

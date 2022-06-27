@@ -15,14 +15,19 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Map;
+import java.util.Random;
 
+import io.reactivex.Flowable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import zjy.android.bliveinteract.R;
+import zjy.android.bliveinteract.manager.BitmapManager;
+import zjy.android.bliveinteract.model.CaptureInfo;
+import zjy.android.bliveinteract.model.GameMessage;
 import zjy.android.bliveinteract.model.Territory;
 import zjy.android.bliveinteract.model.UserDanMu;
 import zjy.android.bliveinteract.model.Warrior;
@@ -42,6 +47,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private boolean isDrawing = false;
     private SurfaceHolder holder;
 
+    private final List<GameMessage> gameMessages = new ArrayList<>();
+
     private Paint mapPaint, rolePaint, groupNamePaint, hpPaint;
     private final List<Warrior> warriors = new ArrayList<>();
     private final Territory[][] territories = new Territory[lineCount][rowCount];
@@ -56,6 +63,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             21}, {4, 21}, {38, 21}};
 
     private static final long UPDATE_TIME = 1000 / 30;
+
+    private final Random random = new Random();
 
     public GameView(Context context) {
         super(context);
@@ -163,26 +172,85 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     @Override
     public void run() {
         while (isDrawing) {
-            Canvas canvas = holder.lockCanvas();
+            Canvas canvas = holder.lockHardwareCanvas();
             try {
                 long start = System.currentTimeMillis();
+                handleGameMessage();
                 calculate();
-                long c = System.currentTimeMillis() - start;
+//                long c = System.currentTimeMillis() - start;
                 drawMap(canvas);
-                long dm = System.currentTimeMillis() - start - c;
+//                long dm = System.currentTimeMillis() - start - c;
                 drawRoles(canvas);
-                long dr = System.currentTimeMillis() - start - c - dm;
+//                long dr = System.currentTimeMillis() - start - c - dm;
+                updateGameInfo();
                 long now = System.currentTimeMillis();
                 long time = now - start;
-                Log.e(TAG, "run: time = " + time + "/c = " + c + "/dm = " + dm);
+//                Log.e(TAG, "run: time = " + time + "/c = " + c + "/dm = " + dm + "/dr = " + dr);
                 if (time < UPDATE_TIME) {
                     Thread.sleep(UPDATE_TIME - time);
                 }
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
                 Log.e(TAG, "run: " + e);
             } finally {
                 holder.unlockCanvasAndPost(canvas);
+            }
+        }
+    }
+
+    private void updateGameInfo() {
+        Flowable.just(warriors)
+                .subscribeOn(Schedulers.computation())
+                .filter(data -> onUpdateGameInfoListener != null)
+                .map(data -> {
+                    Map<Long, CaptureInfo> captureInfoMap = new HashMap<>();
+                    for (Warrior w : data) {
+                        CaptureInfo captureInfo = captureInfoMap.get(w.getUserDanMu().userid);
+                        if (captureInfo == null) {
+                            captureInfo = new CaptureInfo();
+                            captureInfo.userDanMu = w.getUserDanMu();
+                            captureInfoMap.put(w.getUserDanMu().userid, captureInfo);
+                        }
+                        captureInfo.captureCount += w.getCaptureCount();
+                    }
+                    return new ArrayList<>(captureInfoMap.values());
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(data -> onUpdateGameInfoListener.onUpdate(data))
+                .subscribe();
+    }
+
+    private void handleGameMessage() {
+        List<GameMessage> list = new ArrayList<>(gameMessages);
+        gameMessages.clear();
+        for (GameMessage gm : list) {
+            switch (gm.type) {
+                case GameMessage.TYPE_JOIN_GROUP:
+                    addWarrior(gm.nation, gm.userDanMu);
+                    break;
+                case GameMessage.TYPE_ADD_SPEED:
+                    addSpeed(gm.userDanMu, gm.speed);
+                    break;
+                case GameMessage.TYPE_CHANGE_GROUP:
+                    changeNation(gm.nation, gm.userDanMu);
+                    break;
+                case GameMessage.TYPE_GO_CAPITAL:
+                    goCapital(gm.userDanMu);
+                    break;
+                case GameMessage.TYPE_ADD_HELPER:
+                    addHelper(gm.userDanMu);
+                    break;
+                case GameMessage.TYPE_RANDOM_BUFF:
+                    randomBuff(gm.userDanMu);
+                    break;
+                case GameMessage.TYPE_ALL_ADD_SPEED:
+                    for (Warrior w : warriors) {
+                        w.setSpeed(w.getSpeed() + gm.speed);
+                    }
+                    break;
+            }
+            if (onGameMessageListener != null) {
+                onGameMessageListener.onMessage(gameMessages);
             }
         }
     }
@@ -192,7 +260,6 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             advance(w);
         }
 
-//        attack(warriors);
         for (Warrior w : warriors) {
             attack(w);
         }
@@ -214,17 +281,33 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 if (territory.nation == warrior.getNation()) continue;
                 int collisionType = CollisionUtils.shouldCollision(territory, warrior);
                 if (collisionType > 0) {
-                    for (Warrior w : warriors) {
-                        if (w.getNation() == warrior.getNation()) continue;
-                        int type = CollisionUtils.shouldCollision(territory, w);
-                        if (type > 0) {
-                            updateAngle(type, warrior);
-                            advance(warrior);
-                            return;
-                        }
-                    }
                     updateAngle(collisionType, warrior);
-                    territory.nation = warrior.getNation();
+                    if (territory.isCapital) {
+                        if (--territory.hp <= 0) {
+                            int oldNation = territory.nation;
+                            int newNation = warrior.getNation();
+                            territory.isCapital = false;
+                            territory.nation = newNation;
+                            warrior.capture();
+                            for (Warrior w : warriors) {
+                                if (w.getNation() == oldNation) {
+                                    w.setNation(newNation);
+                                }
+                            }
+                            addGameMessage(GameMessage.createAllAddSpeed(1f));
+                        }
+                    } else {
+                        for (Warrior w : warriors) {
+                            if (w.getNation() == warrior.getNation()) continue;
+                            if (CollisionUtils.shouldCollision(territory, w) > 0) {
+                                updateAngle(collisionType, warrior);
+                                advance(warrior);
+                                return;
+                            }
+                        }
+                        territory.nation = warrior.getNation();
+                        warrior.capture();
+                    }
                 }
             }
         }
@@ -315,22 +398,20 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         }
     }
 
-    private void drawRoles(Canvas canvas) throws ExecutionException, InterruptedException {
+    private void drawRoles(Canvas canvas) {
         for (Warrior warrior : warriors) {
-            int size = (int) (warrior.getRadius() * 2);
             float l = warrior.getX() - warrior.getRadius();
             float t = warrior.getY() - warrior.getRadius();
-            Bitmap bitmap = Glide.with(this)
-                    .asBitmap()
-                    .load(warrior.getUserDanMu().img)
-                    .apply(RequestOptions.circleCropTransform())
-                    .submit(size, size)
-                    .get();
+            Bitmap bitmap = BitmapManager.getBitmap(warrior.getUserDanMu().userid);
             canvas.drawBitmap(bitmap, l, t, rolePaint);
         }
     }
 
-    public void addWarrior(int nation, UserDanMu userDanMu) {
+    public void addGameMessage(GameMessage gameMessage) {
+        gameMessages.add(gameMessage);
+    }
+
+    private void addWarrior(int nation, UserDanMu userDanMu) {
         Territory territory = capitals[nation];
         if (territory != null && territory.isCapital) {
             for (Warrior w : warriors) {
@@ -342,7 +423,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         }
     }
 
-    public void changeNation(int nation, UserDanMu userDanMu) {
+    private void changeNation(int nation, UserDanMu userDanMu) {
         List<Warrior> list = new ArrayList<>();
         for (Warrior w : warriors) {
             if (w.getUserDanMu().userid == userDanMu.userid) {
@@ -354,13 +435,15 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             return;
         }
         Territory capital = capitals[nation];
-        for (Warrior w : list) {
-            w.setCurrPoint(capital.rectF.centerX(), capital.rectF.centerY());
-            w.setNation(nation);
+        if (capital.isCapital) {
+            for (Warrior w : list) {
+                w.setCurrPoint(capital.rectF.centerX(), capital.rectF.centerY());
+                w.setNation(nation);
+            }
         }
     }
 
-    public void goCapital(UserDanMu userDanMu) {
+    private void goCapital(UserDanMu userDanMu) {
         for (Warrior entry : warriors) {
             if (entry.getUserDanMu().userid == userDanMu.userid) {
                 Territory capital = capitals[entry.getNation()];
@@ -370,21 +453,21 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         }
     }
 
-    public void randomBuff(UserDanMu userDanMu) {
-        boolean helper = System.currentTimeMillis() % 10 == 0;
+    private void randomBuff(UserDanMu userDanMu) {
+        boolean helper = random.nextInt() % 10 == 0;
         for (Warrior w : warriors) {
             if (w.getUserDanMu().userid == userDanMu.userid) {
                 if (helper) {
                     addHelper(w);
                     return;
                 } else {
-                    addSpeed(w, 0.5f);
+                    addSpeed(w, random.nextFloat());
                 }
             }
         }
     }
 
-    public void addSpeed(UserDanMu userDanMu, float speed) {
+    private void addSpeed(UserDanMu userDanMu, float speed) {
         for (Warrior w : warriors) {
             if (w.getUserDanMu().userid == userDanMu.userid) {
                 addSpeed(w, speed);
@@ -392,23 +475,49 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         }
     }
 
-    public void addSpeed(Warrior warrior, float speed) {
+    private void addSpeed(Warrior warrior, float speed) {
         warrior.setSpeed(warrior.getSpeed() + speed);
     }
 
-    public void addHelper(Warrior warrior) {
+    private void addHelper(Warrior warrior) {
         Territory capital = capitals[warrior.getNation()];
         Warrior helper = new Warrior(capital, warrior.getUserDanMu());
         helper.setSpeed(warrior.getSpeed());
         warriors.add(helper);
     }
 
-    public void addHelper(UserDanMu userDanMu) {
+    private void addHelper(UserDanMu userDanMu) {
         for (Warrior w : warriors) {
             if (w.getUserDanMu().userid == userDanMu.userid) {
                 addHelper(w);
                 return;
             }
         }
+    }
+
+    public void reset() {
+//        init();
+        warriors.clear();
+        initTerritory();
+    }
+
+    private OnUpdateGameInfoListener onUpdateGameInfoListener;
+
+    public void setOnUpdateGameInfoListener(OnUpdateGameInfoListener onUpdateGameInfoListener) {
+        this.onUpdateGameInfoListener = onUpdateGameInfoListener;
+    }
+
+    public interface OnUpdateGameInfoListener {
+        void onUpdate(List<CaptureInfo> captureInfos);
+    }
+
+    private OnGameMessageListener onGameMessageListener;
+
+    public void setOnGameMessageListener(OnGameMessageListener onGameMessageListener) {
+        this.onGameMessageListener = onGameMessageListener;
+    }
+
+    public interface OnGameMessageListener {
+        void onMessage(List<GameMessage> gameMessages);
     }
 }
