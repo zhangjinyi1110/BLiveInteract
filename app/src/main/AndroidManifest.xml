@@ -23,6 +23,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".page.room.RoomActivity"
+            android:theme="@style/RoomTheme"
             android:screenOrientation="landscape"/>
         <service android:name=".page.room.RoomService" />
     </application>

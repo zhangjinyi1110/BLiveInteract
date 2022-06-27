@@ -294,6 +294,12 @@ public class RoomService extends Service {
             long uid = (long) ((double) data.get("uid"));
             long giftId = (long) ((double) data.get("giftId"));
             String giftName = (String) data.get("giftName");
+            if (data.get("blind_gift") != null) {
+                Map<String, Object> original = (Map<String, Object>) data.get("blind_gift");
+
+                giftId = (long) ((double) original.get("original_gift_id"));
+                giftName = (String) original.get("original_gift_name");
+            }
             int num = (int) ((double) data.get("num"));
             Log.e(TAG, "handleCombo: " + giftId + "/" + giftName + "/" + num);
             UserDanMu userDanMu = new UserDanMu(uid, giftName, giftId);

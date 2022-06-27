@@ -21,9 +21,9 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
     private boolean isDrawing;
     private Paint textPaint;
     private SurfaceHolder holder;
-    private List<GameMessage> gameMessages = new ArrayList<>();
+    private final List<GameMessage> gameMessages = new ArrayList<>();
 
-    private float textY;
+    private float textY, textH;
 
     public RankingListView(Context context) {
         super(context);
@@ -46,10 +46,11 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
 
         textPaint = new Paint();
         textPaint.setColor(Color.BLACK);
-        textPaint.setTextSize(28);
+        textPaint.setTextSize(38);
 
         Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
         textY = (fontMetrics.bottom - fontMetrics.ascent) / 2 - fontMetrics.bottom;
+        textH = fontMetrics.bottom - fontMetrics.ascent;
     }
 
     @Override
@@ -85,44 +86,61 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
     }
 
     private void drawList(Canvas canvas) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = gameMessages.size() - 1; i >= 0; i--) {
+        float y = textH - textY;
+        int size = gameMessages.size();
+        for (int i = 0; i < size; i++) {
             GameMessage message = gameMessages.get(i);
+            String text = "";
             if (message.userDanMu != null) {
-                builder.append(message.userDanMu.username);
+                text += message.userDanMu.username;
             }
             switch (message.type) {
                 case GameMessage.TYPE_JOIN_GROUP:
-                    builder.append("加入了");
+                    text += "加入了" + GameView.groupNames[message.nation] + "方";
                     break;
                 case GameMessage.TYPE_ADD_SPEED:
-                    builder.append("获得了加速");
+                    text += "获得了加速";
                     break;
                 case GameMessage.TYPE_CHANGE_GROUP:
-                    builder.append("反水了");
+                    text += "反水到" + GameView.groupNames[message.nation] + "方";
                     break;
                 case GameMessage.TYPE_GO_CAPITAL:
-                    builder.append("回城");
+                    text += "回城";
                     break;
                 case GameMessage.TYPE_ADD_HELPER:
-                    builder.append("增加了分身");
+                    text += "增加了分身";
                     break;
                 case GameMessage.TYPE_RANDOM_BUFF:
-                    builder.append("获得了随机buff");
+                    text += "获得了随机buff";
                     break;
                 case GameMessage.TYPE_ALL_ADD_SPEED:
-                    builder.append("全体增加速度");
+                    text = "全体增加速度";
+                    break;
+                case GameMessage.TYPE_ADD_RADIUS:
+                    text += "变大了";
+                    break;
+                case GameMessage.TYPE_GROUP_ADD_SPEED:
+                    text = GameView.groupNames[message.nation] + "方阵营加速";
+                    break;
+                case GameMessage.TYPE_REMOVE_GROUP:
+                    text = GameView.groupNames[message.nation] + "方阵营战败";
                     break;
             }
-            builder.append('\n');
+            canvas.drawText(text, 0, y, textPaint);
+            y += textH;
         }
-        canvas.drawText(builder.toString(), 0, getHeight() - textY, textPaint);
     }
 
     public void setGameMessages(List<GameMessage> gameMessages) {
         int size = gameMessages.size();
-        if (size > 0 && this.gameMessages.size() >= 8) {
-            this.gameMessages.subList(0, size).clear();
+        if (size == 0) return;
+        int oldSize = this.gameMessages.size();
+        if (oldSize >= 8) {
+            if (size < 8) {
+                this.gameMessages.subList(0, size).clear();
+            } else {
+                this.gameMessages.clear();
+            }
         }
         this.gameMessages.addAll(gameMessages);
     }

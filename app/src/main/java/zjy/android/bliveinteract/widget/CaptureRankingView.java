@@ -1,6 +1,7 @@
 package zjy.android.bliveinteract.widget;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -14,6 +15,7 @@ import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import zjy.android.bliveinteract.manager.BitmapManager;
 import zjy.android.bliveinteract.model.CaptureInfo;
 
 public class CaptureRankingView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
@@ -21,9 +23,9 @@ public class CaptureRankingView extends SurfaceView implements Runnable, Surface
     private SurfaceHolder holder;
     private boolean isDrawing;
 
-    private final int size = WarGameView.nationName.length;
-    private final  Paint[] bgPaint = new Paint[size];
-    private Paint namePaint, capturePaint, imgPaint;
+    private Paint namePaint;
+
+    private float textY;
 
     private List<CaptureInfo> captureInfos = new ArrayList<>();
 
@@ -49,6 +51,8 @@ public class CaptureRankingView extends SurfaceView implements Runnable, Surface
         namePaint = new Paint();
         namePaint.setTextSize(28);
         namePaint.setColor(Color.BLACK);
+        Paint.FontMetrics fontMetrics = namePaint.getFontMetrics();
+        textY = (fontMetrics.bottom - fontMetrics.ascent) / 2 - fontMetrics.bottom;
     }
 
     @Override
@@ -88,6 +92,7 @@ public class CaptureRankingView extends SurfaceView implements Runnable, Surface
         int height = 70;
         for (int i = 0; i < size; i++) {
             CaptureInfo captureInfo = captureInfos.get(i);
+            if (captureInfo.captureCount <= 0) continue;
             String count = captureInfo.captureCount + "";
             float cw = namePaint.measureText(count);
             String name;
@@ -96,8 +101,11 @@ public class CaptureRankingView extends SurfaceView implements Runnable, Surface
             } else {
                 name = captureInfo.userDanMu.username.substring(0, 9);
             }
-            canvas.drawText(name, 100, i * height + 48, namePaint);
-            canvas.drawText(count, getWidth() - cw - 10, i * height + 48, namePaint);
+            canvas.drawText(name, 70, i * height + height / 2f + textY, namePaint);
+            canvas.drawText(count, getWidth() - cw - 10, i * height + height / 2f + textY, namePaint);
+            canvas.drawText(captureInfo.speed + "", getWidth() - cw - 200, i * height + height / 2f + textY, namePaint);
+            Bitmap bitmap = BitmapManager.getBitmap(captureInfo.userDanMu.userid);
+            canvas.drawBitmap(bitmap, 10, i * height + 10, namePaint);
         }
     }
 

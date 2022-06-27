@@ -25,6 +25,7 @@ import zjy.android.bliveinteract.R;
 import zjy.android.bliveinteract.contract.MainContract;
 import zjy.android.bliveinteract.model.GameMessage;
 import zjy.android.bliveinteract.model.UserDanMu;
+import zjy.android.bliveinteract.model.Warrior;
 import zjy.android.bliveinteract.utils.ToastUtils;
 import zjy.android.bliveinteract.widget.CaptureRankingView;
 import zjy.android.bliveinteract.widget.GameView;
@@ -167,16 +168,17 @@ public class RoomActivity extends FragmentActivity {
     private void handleCombo(UserDanMu userDanMu) {
         if (userDanMu.giftId == 1) {//辣条
 //            warGameView.addSpeed(userDanMu, 2f);
-            warGameView.addGameMessage(GameMessage.createAddSpeed(1f, userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddSpeed(0.5f, userDanMu));
         } else if (userDanMu.giftId == 31036) {//小花花
 //            warGameView.addSpeed(userDanMu, 4);
-            warGameView.addGameMessage(GameMessage.createAddSpeed(2f, userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddSpeed(1f, userDanMu));
         } else if (userDanMu.giftId == 31037) {//打call
 //            warGameView.addHelper(userDanMu);
             warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
         } else if (userDanMu.giftId == 31039) {//牛哇
 
         } else if (userDanMu.giftId == 30971) {//这个好诶
+            warGameView.addGameMessage(GameMessage.createAddRadius(Warrior.RADIUS, userDanMu));
 
         } else if (userDanMu.giftId == 31025) {//泡泡糖
 
@@ -186,6 +188,8 @@ public class RoomActivity extends FragmentActivity {
 
         } else if (userDanMu.giftId == 20011) {//金币
 
+        } else if (userDanMu.giftId == 31026) {//白银宝箱
+            warGameView.addGameMessage(GameMessage.createGroupAddSpeed(0.5f, userDanMu));
         }
     }
 }
