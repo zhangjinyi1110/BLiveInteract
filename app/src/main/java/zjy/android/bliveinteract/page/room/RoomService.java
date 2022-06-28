@@ -12,7 +12,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -30,7 +29,6 @@ import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 import okio.Buffer;
 import okio.ByteString;
-import zjy.android.bliveinteract.App;
 import zjy.android.bliveinteract.contract.MainContract;
 import zjy.android.bliveinteract.contract.RoomContract;
 import zjy.android.bliveinteract.manager.BitmapManager;
@@ -183,7 +181,7 @@ public class RoomService extends Service {
             PING_BUFFER.writeShort(1);
             PING_BUFFER.writeInt(2);
             PING_BUFFER.writeInt(1);
-            Flowable.timer(30, TimeUnit.SECONDS)
+            Flowable.timer(10, TimeUnit.SECONDS)
                     .filter(aLong -> webSocket == null)
                     .doOnNext((a) -> webSocket.send(PING_BUFFER.readByteString()))
                     .doOnNext((a) -> ping())
@@ -302,7 +300,7 @@ public class RoomService extends Service {
             }
             int num = (int) ((double) data.get("num"));
             Log.e(TAG, "handleCombo: " + giftId + "/" + giftName + "/" + num);
-            UserDanMu userDanMu = new UserDanMu(uid, giftName, giftId);
+            UserDanMu userDanMu = new UserDanMu(uid, giftName, giftId, num);
             if (handler != null) {
                 Message message = Message.obtain();
                 message.obj = userDanMu;

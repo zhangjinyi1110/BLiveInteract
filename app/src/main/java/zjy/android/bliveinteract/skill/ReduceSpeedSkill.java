@@ -25,6 +25,6 @@ public class ReduceSpeedSkill implements Skill {
 
     @Override
     public long skillTime() {
-        return 2000;
+        return 3000;
     }
 }

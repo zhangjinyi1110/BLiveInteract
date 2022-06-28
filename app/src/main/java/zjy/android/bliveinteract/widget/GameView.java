@@ -290,11 +290,13 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     }
                     break;
                 case GameMessage.TYPE_GROUP_ADD_SPEED:
-                    int nation = -1;
-                    for (Warrior w : warriors) {
-                        if (w.getUserDanMu().userid == gm.userDanMu.userid) {
-                            nation = w.getNation();
-                            break;
+                    int nation = gm.userDanMu == null ? gm.nation : -1;
+                    if (nation == -1) {
+                        for (Warrior w : warriors) {
+                            if (w.getUserDanMu().userid == gm.userDanMu.userid) {
+                                nation = w.getNation();
+                                break;
+                            }
                         }
                     }
                     for (Warrior w : warriors) {
@@ -325,7 +327,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     Map<Long, Warrior> map = new HashMap<>();
                     Set<Long> set = new HashSet<>();
                     for (Warrior w : warriors) {
-                        boolean helper = random.nextInt() % 25 == 0;
+                        boolean helper = random.nextInt() % 50 == 0;
                         if (w.getNation() == gm.nation) {
                             if (helper && !map.containsKey(w.getUserDanMu().userid)) {
                                 map.put(w.getUserDanMu().userid, w);
@@ -357,7 +359,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     } else if (capitals[gm.nation].isCapital) {
                         for (Warrior w : warriors) {
                             if (w.getNation() != gm.nation && random.nextInt() % 3 == 0) {
-                                w.setReduceSpeedPercent(0.5f);
+                                w.setReduceSpeedPercent(0.8f);
                             }
                         }
                     }
@@ -387,7 +389,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     } else if (capitals[gm.nation].isCapital) {
                         for (Warrior w : warriors) {
                             if (w.getNation() == gm.nation) {
-                                w.setAddSpeedPercent(3);
+                                w.setAddSpeedPercent(5);
                             }
                         }
                     }
@@ -413,7 +415,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 xSpeed = w.getXSpeed() / count;
                 for (int i = 0; i < count; i++) {
                     advance(w, xSpeed, ySpeed);
-                    if (attack(w) > 0) {
+                    if (attack(w) != 0) {
                         break;
                     }
                 }
@@ -425,7 +427,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     }
 
     private int attack(Warrior warrior) {
-        edgeCorrect(warrior);
+        if (edgeCorrect(warrior)) {
+            return -1;
+        }
         float fx = warrior.getX();
         float fy = warrior.getY();
         float r = warrior.getRadius();
@@ -442,7 +446,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 if (collisionType > 0) {
                     updateAngle(collisionType, warrior);
                     if (invalidAttackNation != -1 && invalidAttackNation == territory.nation) {
-                        continue;
+                        addGameMessage(GameMessage.createGroupAddSpeed(0.01f, invalidAttackNation));
                     }
                     if (territory.isCapital) {
                         if (--territory.hp <= 0) {
@@ -503,7 +507,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         }
     }
 
-    private void edgeCorrect(Warrior warrior) {
+    private boolean edgeCorrect(Warrior warrior) {
         float left = warrior.getX() - warrior.getRadius();
         float right = warrior.getX() + warrior.getRadius();
         float top = warrior.getY() - warrior.getRadius();
@@ -511,16 +515,21 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         if (top <= 0) {
             warrior.setCurrPoint(warrior.getX(), warrior.getRadius() + 1);
             warrior.updateAngle(1);
+            return true;
         } else if (bottom >= getHeight()) {
             warrior.setCurrPoint(warrior.getX(), getHeight() - warrior.getRadius() - 1);
             warrior.updateAngle(3);
+            return true;
         } else if (left <= 0) {
             warrior.setCurrPoint(warrior.getRadius() + 1, warrior.getY());
-            warrior.updateAngle(0);
+            warrior.updateAngle(2);
+            return true;
         } else if (right >= getWidth()) {
             warrior.setCurrPoint(getWidth() - warrior.getRadius() - 1, warrior.getY());
-            warrior.updateAngle(2);
+            warrior.updateAngle(0);
+            return true;
         }
+        return false;
     }
 
     private void advance(Warrior warrior, double xSpeed, double ySpeed) {
@@ -581,6 +590,15 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     public void addGameMessage(GameMessage gameMessage) {
         gameMessages.add(gameMessage);
+    }
+
+    public boolean checkUser(UserDanMu userDanMu) {
+        for (Warrior w : warriors) {
+            if (userDanMu.userid == w.getUserDanMu().userid) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void addWarrior(int nation, UserDanMu userDanMu) {
@@ -672,6 +690,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 //        init();
         warriors.clear();
         initTerritory();
+        overSkill();
         initSkill();
         initSpeed = 0;
     }
