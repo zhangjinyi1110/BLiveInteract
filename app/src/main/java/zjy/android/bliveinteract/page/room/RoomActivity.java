@@ -98,6 +98,8 @@ public class RoomActivity extends FragmentActivity {
                 .map(aLong -> 410 - aLong)
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(aLong -> timeView.setText(String.valueOf(aLong)))
+                .filter(aLong -> aLong / 100 == 0)
+                .doOnNext(aLong -> warGameView.addGameMessage(GameMessage.createAllAddSpeed(5)))
                 .subscribe();
     }
 

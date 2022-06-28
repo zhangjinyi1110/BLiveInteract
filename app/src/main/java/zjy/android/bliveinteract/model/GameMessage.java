@@ -85,6 +85,14 @@ public class GameMessage {
         return gameMessage;
     }
 
+    public static GameMessage createGroupAddSpeed(float speed, int nation) {
+        GameMessage gameMessage = new GameMessage();
+        gameMessage.type = TYPE_GROUP_ADD_SPEED;
+        gameMessage.speed = speed;
+        gameMessage.nation = nation;
+        return gameMessage;
+    }
+
     public static GameMessage createAddRadius(float radius, UserDanMu userDanMu) {
         GameMessage gameMessage = new GameMessage();
         gameMessage.type = TYPE_GROUP_ADD_SPEED;
