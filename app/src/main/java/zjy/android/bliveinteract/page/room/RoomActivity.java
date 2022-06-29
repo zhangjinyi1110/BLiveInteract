@@ -270,7 +270,6 @@ public class RoomActivity extends FragmentActivity {
 
         } else if (userDanMu.giftId == 30971) {//这个好诶
             warGameView.addGameMessage(GameMessage.createAddRadius(10f * userDanMu.giftNum, userDanMu));
-
         } else if (userDanMu.giftId == 31025) {//泡泡糖
 
         } else if (userDanMu.giftId == 30896) {//打榜

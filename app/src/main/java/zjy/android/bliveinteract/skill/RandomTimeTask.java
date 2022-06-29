@@ -16,7 +16,7 @@ public class RandomTimeTask extends Thread {
 
     private final List<Skill> skills;
 
-    private boolean isDispose = false;
+    private boolean isDisposed = false;
 
     private Disposable disposable;
 
@@ -26,7 +26,7 @@ public class RandomTimeTask extends Thread {
 
     @Override
     public void run() {
-        while (!isDispose) {
+        while (!isDisposed) {
             float time = random.nextFloat() * 9.5f + 0.5f;
             Log.e("TAG", "run: " + time);
             try {
@@ -52,9 +52,6 @@ public class RandomTimeTask extends Thread {
     }
 
     public void dispose() {
-        isDispose = true;
-        if (disposable != null && !disposable.isDisposed()) {
-            disposable.dispose();
-        }
+        isDisposed = true;
     }
 }

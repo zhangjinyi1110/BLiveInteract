@@ -389,7 +389,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     } else if (capitals[gm.nation].isCapital) {
                         for (Warrior w : warriors) {
                             if (w.getNation() == gm.nation) {
-                                w.setAddSpeedPercent(5);
+                                w.setAddSpeedPercent(3);
                             }
                         }
                     }
@@ -456,6 +456,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                             warrior.capture();
                             count++;
                             addGameMessage(GameMessage.createAllAddSpeed(5f));
+
                         }
                     } else {
                         boolean flag = false;
