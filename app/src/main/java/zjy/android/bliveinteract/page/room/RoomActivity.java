@@ -126,13 +126,13 @@ public class RoomActivity extends FragmentActivity {
         if (disposable != null && !disposable.isDisposed()) {
             disposable.dispose();
         }
-        disposable = Flowable.intervalRange(0, 410, 0, 1, TimeUnit.SECONDS)
+        disposable = Flowable.intervalRange(0, 300, 0, 1, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.computation())
-                .map(aLong -> 410 - aLong)
+                .map(aLong -> 300 - aLong)
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(aLong -> timeView.setText(String.valueOf(aLong)))
                 .filter(aLong -> aLong / 100 == 0)
-                .doOnNext(aLong -> warGameView.addGameMessage(GameMessage.createAllAddSpeed(5)))
+                .doOnNext(aLong -> warGameView.addGameMessage(GameMessage.createAllAddSpeed(aLong / 50f)))
                 .subscribe();
     }
 
