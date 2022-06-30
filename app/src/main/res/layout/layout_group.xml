@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="data"
+            type="zjy.android.bliveinteract.model.GroupInfo" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:bgColor="@{data.color}"
+        tools:background="@color/black">
+
+        <TextView
+            android:id="@+id/group_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@{data.groupName}"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="红发" />
+
+        <TextView
+            android:id="@+id/passive_skill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@{`被动：` + data.passiveSkill}"
+            android:textColor="@color/white"
+            android:textSize="8sp"
+            app:layout_constraintLeft_toLeftOf="@id/group_name"
+            app:layout_constraintTop_toBottomOf="@id/group_name"
+            tools:text="被动：给我个面子" />
+
+        <TextView
+            android:id="@+id/passive_skill_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@{`(` + data.passiveSkillInfo + `)`}"
+            android:textColor="@color/white"
+            android:textSize="8sp"
+            app:layout_constraintLeft_toLeftOf="@id/passive_skill"
+            app:layout_constraintTop_toBottomOf="@id/passive_skill"
+            tools:text="(随机敌方降低速度)" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -10,6 +10,7 @@ public class UserDanMu implements Serializable {
 //    public String img;
     public long giftId;
     public String giftName;
+    public int giftNum;
 
     public UserDanMu(long userid, String username, String danMu) {
         this.userid = userid;
@@ -17,9 +18,10 @@ public class UserDanMu implements Serializable {
         this.danMu = danMu;
     }
 
-    public UserDanMu(long userid, String giftName, long giftId) {
+    public UserDanMu(long userid, String giftName, long giftId, int giftNum) {
         this.userid = userid;
         this.giftName = giftName;
         this.giftId = giftId;
+        this.giftNum = giftNum;
     }
 }

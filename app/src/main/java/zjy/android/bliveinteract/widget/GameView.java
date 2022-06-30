@@ -70,7 +70,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private final RectF groupImageDst = new RectF();
     private float groupNameHalfWidth, groupNameHalfHeight;
     private float hpHalfWidth, hpHalfHeight;
-    private final int[][] capitalPoint = new int[][]{{5, 5}, {37, 5}, {5, 37}, {37, 37}};
+    private final int[][] capitalPoint = new int[][]{{6, 6}, {36, 6}, {6, 36}, {36, 36}};
 
     private static final long UPDATE_TIME = 1000 / 30;
 
@@ -147,7 +147,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             Territory weiCapital = territories[point[0]][point[1]];
             weiCapital.nation = i;
             weiCapital.isCapital = true;
-            weiCapital.hp = 5;
+            weiCapital.hp = 8;
             territories[point[0] + 1][point[1] + 1].nation = i;
             territories[point[0] + 1][point[1] - 1].nation = i;
             territories[point[0] + 1][point[1]].nation = i;
@@ -359,7 +359,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     } else if (capitals[gm.nation].isCapital) {
                         for (Warrior w : warriors) {
                             if (w.getNation() != gm.nation && random.nextInt() % 3 == 0) {
-                                w.setReduceSpeedPercent(0.5f);
+                                w.setReduceSpeedPercent(0.8f);
                             }
                         }
                     }
@@ -415,7 +415,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 xSpeed = w.getXSpeed() / count;
                 for (int i = 0; i < count; i++) {
                     advance(w, xSpeed, ySpeed);
-                    if (attack(w) > 0) {
+                    if (attack(w) != 0) {
                         break;
                     }
                 }
@@ -428,7 +428,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     private int attack(Warrior warrior) {
         if (edgeCorrect(warrior)) {
-            return 0;
+            return -1;
         }
         float fx = warrior.getX();
         float fy = warrior.getY();
@@ -456,6 +456,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                             warrior.capture();
                             count++;
                             addGameMessage(GameMessage.createAllAddSpeed(5f));
+
                         }
                     } else {
                         boolean flag = false;
@@ -631,6 +632,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             for (Warrior w : list) {
                 w.setCurrPoint(capital.rectF.centerX(), capital.rectF.centerY());
                 w.setNation(nation);
+                w.setAddSpeedPercent(0);
+                w.setRadiusPercent(0);
+                w.setReduceSpeedPercent(0);
             }
         }
     }

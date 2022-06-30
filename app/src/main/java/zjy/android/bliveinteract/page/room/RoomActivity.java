@@ -3,6 +3,7 @@ package zjy.android.bliveinteract.page.room;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -12,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.FragmentActivity;
 
 import java.util.Collections;
@@ -24,10 +26,11 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import zjy.android.bliveinteract.R;
 import zjy.android.bliveinteract.contract.MainContract;
+import zjy.android.bliveinteract.databinding.ActivityRoomBinding;
 import zjy.android.bliveinteract.manager.BitmapManager;
 import zjy.android.bliveinteract.model.GameMessage;
+import zjy.android.bliveinteract.model.GroupInfo;
 import zjy.android.bliveinteract.model.UserDanMu;
-import zjy.android.bliveinteract.model.Warrior;
 import zjy.android.bliveinteract.utils.ToastUtils;
 import zjy.android.bliveinteract.widget.CaptureRankingView;
 import zjy.android.bliveinteract.widget.GameView;
@@ -73,10 +76,12 @@ public class RoomActivity extends FragmentActivity {
 
     private CaptureRankingView captureRankingView;
 
+    private ActivityRoomBinding binding;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_room);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_room);
         roomId = getIntent().getLongExtra("roomId", 0);
         bindService(new Intent(this, RoomService.class), connection, BIND_AUTO_CREATE);
 
@@ -84,6 +89,34 @@ public class RoomActivity extends FragmentActivity {
         rankingListView = findViewById(R.id.ranking_list);
         captureRankingView = findViewById(R.id.capture_ranking);
         initBtn();
+        initGroup();
+    }
+
+    private void initGroup() {
+        GroupInfo red = new GroupInfo();
+        red.color = Color.parseColor("#FF3715");
+        red.groupName = "红发";
+        red.passiveSkill = "给我个面子";
+        red.passiveSkillInfo = "随机敌方降低速度，持续3秒";
+        binding.groupRed.setData(red);
+        GroupInfo black = new GroupInfo();
+        black.color = Color.parseColor("#333333");
+        black.groupName = "黑胡子";
+        black.passiveSkill = "吸收反弹";
+        black.passiveSkillInfo = "被攻击增加速度，持续3秒";
+        binding.groupBlack.setData(black);
+        GroupInfo blue = new GroupInfo();
+        blue.color = Color.parseColor("#1678FF");
+        blue.groupName = "巴基";
+        blue.passiveSkill = "霸王色运气";
+        blue.passiveSkillInfo = "己方随机buff";
+        binding.groupBlue.setData(blue);
+        GroupInfo yellow = new GroupInfo();
+        yellow.color = Color.parseColor("#FFDA17");
+        yellow.groupName = "草帽";
+        yellow.passiveSkill = "二/三档";
+        yellow.passiveSkillInfo = "加速/变大，持续3秒";
+        binding.groupYellow.setData(yellow);
     }
 
     private TextView timeView;
@@ -93,13 +126,13 @@ public class RoomActivity extends FragmentActivity {
         if (disposable != null && !disposable.isDisposed()) {
             disposable.dispose();
         }
-        disposable = Flowable.intervalRange(0, 410, 0, 1, TimeUnit.SECONDS)
+        disposable = Flowable.intervalRange(0, 300, 0, 1, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.computation())
-                .map(aLong -> 410 - aLong)
+                .map(aLong -> 300 - aLong)
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(aLong -> timeView.setText(String.valueOf(aLong)))
                 .filter(aLong -> aLong / 100 == 0)
-                .doOnNext(aLong -> warGameView.addGameMessage(GameMessage.createAllAddSpeed(5)))
+                .doOnNext(aLong -> warGameView.addGameMessage(GameMessage.createAllAddSpeed(aLong / 50f)))
                 .subscribe();
     }
 
@@ -111,7 +144,6 @@ public class RoomActivity extends FragmentActivity {
             timeout();
         });
         new Thread(() -> {
-
             try {
                 BitmapManager.cacheBitmap(1, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
                         ".jpg");
@@ -146,7 +178,33 @@ public class RoomActivity extends FragmentActivity {
             warGameView.addGameMessage(GameMessage.createJoinGroup(0, userDanMu4));
             warGameView.addGameMessage(GameMessage.createJoinGroup(0, userDanMu5));
             warGameView.addGameMessage(GameMessage.createJoinGroup(3, userDanMu6));
-//            warGameView.addGameMessage(GameMessage.createAddSpeed(30, userDanMu1));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddSpeed(150, userDanMu));
         });
         warGameView.setOnUpdateGameInfoListener((captureInfos) -> {
             Collections.sort(captureInfos, (o1, o2) -> o2.captureCount - o1.captureCount);
@@ -201,16 +259,17 @@ public class RoomActivity extends FragmentActivity {
 
     private void handleCombo(UserDanMu userDanMu) {
         if (userDanMu.giftId == 1) {//辣条
-            warGameView.addGameMessage(GameMessage.createAddSpeed(0.5f, userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddSpeed(0.5f * userDanMu.giftNum, userDanMu));
         } else if (userDanMu.giftId == 31036) {//小花花
-            warGameView.addGameMessage(GameMessage.createAddSpeed(1f, userDanMu));
+            warGameView.addGameMessage(GameMessage.createAddSpeed(1f * userDanMu.giftNum, userDanMu));
         } else if (userDanMu.giftId == 31037) {//打call
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            for (int i = 0; i < userDanMu.giftNum; i++) {
+                warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
+            }
         } else if (userDanMu.giftId == 31039) {//牛哇
 
         } else if (userDanMu.giftId == 30971) {//这个好诶
-            warGameView.addGameMessage(GameMessage.createAddRadius(Warrior.RADIUS, userDanMu));
-
+            warGameView.addGameMessage(GameMessage.createAddRadius(10f * userDanMu.giftNum, userDanMu));
         } else if (userDanMu.giftId == 31025) {//泡泡糖
 
         } else if (userDanMu.giftId == 30896) {//打榜
@@ -220,7 +279,7 @@ public class RoomActivity extends FragmentActivity {
         } else if (userDanMu.giftId == 20011) {//金币
 
         } else if (userDanMu.giftId == 31026) {//白银宝箱
-            warGameView.addGameMessage(GameMessage.createGroupAddSpeed(0.5f, userDanMu));
+            warGameView.addGameMessage(GameMessage.createGroupAddSpeed(0.5f * userDanMu.giftNum, userDanMu));
         }
     }
 }
