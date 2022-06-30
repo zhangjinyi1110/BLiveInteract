@@ -17,6 +17,7 @@ public class GameMessage {
     public static final int TYPE_GROUP_REDUCE_SPEED = 12;
     public static final int TYPE_GROUP_BIGGER = 13;
     public static final int TYPE_GROUP_ADD_SPEED_PERCENT = 14;
+    public static final int TYPE_CAPITAL_GUARD_TIME = 15;
 
     public int type;
     public int nation;
@@ -95,7 +96,7 @@ public class GameMessage {
 
     public static GameMessage createAddRadius(float radius, UserDanMu userDanMu) {
         GameMessage gameMessage = new GameMessage();
-        gameMessage.type = TYPE_GROUP_ADD_SPEED;
+        gameMessage.type = TYPE_ADD_RADIUS;
         gameMessage.radius = radius;
         gameMessage.userDanMu = userDanMu;
         return gameMessage;
@@ -142,6 +143,14 @@ public class GameMessage {
     public static GameMessage createGroupAddSpeedPercent(int nation, boolean dispose) {
         GameMessage gameMessage = new GameMessage();
         gameMessage.type = TYPE_GROUP_ADD_SPEED_PERCENT;
+        gameMessage.nation = nation;
+        gameMessage.dispose = dispose;
+        return gameMessage;
+    }
+
+    public static GameMessage createCapitalGuardTime(int nation, boolean dispose) {
+        GameMessage gameMessage = new GameMessage();
+        gameMessage.type = TYPE_CAPITAL_GUARD_TIME;
         gameMessage.nation = nation;
         gameMessage.dispose = dispose;
         return gameMessage;

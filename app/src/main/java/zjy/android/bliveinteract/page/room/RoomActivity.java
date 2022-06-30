@@ -17,6 +17,7 @@ import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.FragmentActivity;
 
 import java.util.Collections;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -131,7 +132,7 @@ public class RoomActivity extends FragmentActivity {
                 .map(aLong -> 300 - aLong)
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(aLong -> timeView.setText(String.valueOf(aLong)))
-                .filter(aLong -> aLong / 100 == 0)
+                .filter(aLong -> aLong % 100 == 0 && aLong != 300)
                 .doOnNext(aLong -> warGameView.addGameMessage(GameMessage.createAllAddSpeed(aLong / 50f)))
                 .subscribe();
     }
@@ -145,66 +146,30 @@ public class RoomActivity extends FragmentActivity {
         });
         new Thread(() -> {
             try {
-                BitmapManager.cacheBitmap(1, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
-                        ".jpg");
-                BitmapManager.cacheBitmap(2, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
-                        ".jpg");
-                BitmapManager.cacheBitmap(2, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
-                        ".jpg");
-                BitmapManager.cacheBitmap(3, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
-                        ".jpg");
-                BitmapManager.cacheBitmap(4, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
-                        ".jpg");
-                BitmapManager.cacheBitmap(5, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
-                        ".jpg");
-                BitmapManager.cacheBitmap(6, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3" +
-                        ".jpg");
+                for (int i = 0; i < 40; i++) {
+                    BitmapManager.cacheBitmap(i, "http://i1.hdslb.com/bfs/face/68937f0b8d49c4e537e0822c13fc8e4e050234a3.jpg");
+                }
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
+            Random random = new Random();
+            while (true) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                int i = random.nextInt(40);
+                UserDanMu userDanMu = new UserDanMu(i % 40, (i % 4) + "-" + i, "红");
+                warGameView.addGameMessage(GameMessage.createRandomBuff(userDanMu));
+            }
         }).start();
         findViewById(R.id.speed).setOnClickListener(v -> {
-            UserDanMu userDanMu = new UserDanMu(1, "aaa", "红");
-            UserDanMu userDanMu1 = new UserDanMu(2, "aaa", "红");
-            UserDanMu userDanMu2 = new UserDanMu(2, "aaa", "红");
-            UserDanMu userDanMu3 = new UserDanMu(3, "aaa", "红");
-            UserDanMu userDanMu4 = new UserDanMu(4, "aaa", "红");
-            UserDanMu userDanMu5 = new UserDanMu(5, "aaa", "红");
-            UserDanMu userDanMu6 = new UserDanMu(6, "aaa", "红");
-            warGameView.addGameMessage(GameMessage.createJoinGroup(0, userDanMu));
-            warGameView.addGameMessage(GameMessage.createJoinGroup(2, userDanMu1));
-            warGameView.addGameMessage(GameMessage.createJoinGroup(1, userDanMu2));
-            warGameView.addGameMessage(GameMessage.createJoinGroup(1, userDanMu3));
-            warGameView.addGameMessage(GameMessage.createJoinGroup(0, userDanMu4));
-            warGameView.addGameMessage(GameMessage.createJoinGroup(0, userDanMu5));
-            warGameView.addGameMessage(GameMessage.createJoinGroup(3, userDanMu6));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddHelper(userDanMu));
-            warGameView.addGameMessage(GameMessage.createAddSpeed(150, userDanMu));
+//            UserDanMu userDanMu = new UserDanMu(1, "aaa", "红");
+            for (int i = 0; i < 40; i++) {
+                UserDanMu userDanMu = new UserDanMu(i, (i % 4) + "-" + i, "红");
+                warGameView.addGameMessage(GameMessage.createJoinGroup(i % 4, userDanMu));
+            }
         });
         warGameView.setOnUpdateGameInfoListener((captureInfos) -> {
             Collections.sort(captureInfos, (o1, o2) -> o2.captureCount - o1.captureCount);
@@ -225,7 +190,7 @@ public class RoomActivity extends FragmentActivity {
     }
 
     private void handleDanMu(UserDanMu userDanMu) {
-//        if (true) return;
+        if (true) return;
         for (int i = 0; i < GameView.groupNames.length; i++) {
             if (userDanMu.danMu.equals(GameView.groupNames[i])) {
                 this.userDanMu = userDanMu;

@@ -41,8 +41,8 @@ public class RetrofitHelper {
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10, TimeUnit.SECONDS)
                     .writeTimeout(10, TimeUnit.SECONDS)
-                    .addInterceptor(new HttpLoggingInterceptor(message -> Log.e("RetrofitHelper",
-                            "log: " + message)).setLevel(HttpLoggingInterceptor.Level.BODY))
+//                    .addInterceptor(new HttpLoggingInterceptor(message -> Log.e("RetrofitHelper",
+//                            "log: " + message)).setLevel(HttpLoggingInterceptor.Level.BODY))
                     .build();
         }
         return client;

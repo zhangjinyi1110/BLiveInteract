@@ -138,6 +138,7 @@ public class RankingListView extends SurfaceView implements Runnable, SurfaceHol
                     text += "变大了";
                     break;
                 case GameMessage.TYPE_GROUP_ADD_SPEED:
+                    if (message.userDanMu == null) continue;
                     paint = buffPaint;
                     text = GameView.groupNames[message.nation] + "方阵营加速";
                     break;
